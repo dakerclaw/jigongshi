@@ -1,0 +1,215 @@
+<view class="page">
+  <!-- ========== 当前班制 ========== -->
+  <view class="card shift-card">
+    <view class="shift-card__main">
+      <view class="shift-card__label">当前班制</view>
+      <view class="shift-card__value">
+        <view class="badge badge--{{shiftTheme}}">{{shift}}</view>
+        <view class="shift-card__type">{{shiftTypeLabel}}</view>
+      </view>
+    </view>
+    <view class="shift-card__btn" bindtap="openShiftPicker">变更</view>
+  </view>
+
+  <!-- ========== 记录方式 ========== -->
+  <view class="mode-tabs">
+    <view
+      class="mode-tabs__item {{mode === 'time' ? 'is-active' : ''}}"
+      data-mode="time"
+      bindtap="onModeChange"
+    >
+      按时间记录
+    </view>
+    <view
+      class="mode-tabs__item {{mode === 'hours' ? 'is-active' : ''}}"
+      data-mode="hours"
+      bindtap="onModeChange"
+    >
+      按工时记录
+    </view>
+  </view>
+
+  <!-- ========== 按时间记录 ========== -->
+  <view class="card" wx:if="{{mode === 'time'}}">
+    <view class="clock">
+      <view class="clock__time">{{nowTime}}</view>
+      <view class="clock__date">{{nowDate}}</view>
+    </view>
+
+    <!-- 未上班 -->
+    <block wx:if="{{!pending}}">
+      <view class="hint">
+        <view>点下面按钮记下上班时间，</view>
+        <view>下班时再点一次即可</view>
+      </view>
+      <view class="big-btn big-btn--primary" bindtap="onClockIn">上 班 打 卡</view>
+    </block>
+
+    <!-- 已上班，等待下班 -->
+    <block wx:else>
+      <view class="pending-box">
+        <view class="pending-row">
+          <text class="pending-row__k">上班时间</text>
+          <text class="pending-row__v num">{{pending.startTime}}</text>
+        </view>
+        <view class="pending-row">
+          <text class="pending-row__k">已经上班</text>
+          <text class="pending-row__v num pending-row__v--hl">{{pendingElapsed}}</text>
+        </view>
+        <view class="pending-row">
+          <text class="pending-row__k">班　　次</text>
+          <text class="pending-row__v">{{pending.shift}}</text>
+        </view>
+      </view>
+      <view class="big-btn big-btn--primary" bindtap="onClockOut">下 班 打 卡</view>
+      <view class="big-btn big-btn--gray mt-24" bindtap="onCancelClock">取消本次上班</view>
+    </block>
+  </view>
+
+  <!-- ========== 按工时记录 ========== -->
+  <view class="card" wx:else>
+    <view class="section-title">选择今天上了几小时</view>
+    <view class="hour-grid">
+      <view
+        wx:for="{{hourOptions}}"
+        wx:key="*this"
+        class="hour-cell {{selectedHour === item ? 'is-active' : ''}}"
+        data-hour="{{item}}"
+        bindtap="onSelectHour"
+      >
+        {{item}} 小时
+      </view>
+    </view>
+
+    <view class="calc-box" wx:if="{{selectedHour}}">
+      <view class="calc-box__line">
+        <text class="calc-box__k">出勤时长</text>
+        <text class="calc-box__v num">{{selectedHour}} 小时</text>
+      </view>
+      <view class="calc-box__line">
+        <text class="calc-box__k">折合工时</text>
+        <text class="calc-box__v calc-box__v--big num">{{selectedUnits}}</text>
+        <text class="calc-box__unit">个</text>
+      </view>
+      <view class="calc-box__note">8 小时 = 1 个工时</view>
+    </view>
+
+    <view
+      class="big-btn {{selectedHour ? 'big-btn--primary' : 'big-btn--disabled'}}"
+      bindtap="onSaveHours"
+    >
+      保 存 记 录
+    </view>
+  </view>
+
+  <!-- ========== 今日记录 ========== -->
+  <view class="card">
+    <view class="list-head">
+      <view class="section-title list-head__title">今日记录</view>
+      <view class="list-head__sum">
+        共 <text class="num list-head__num">{{todayHours}}</text> 小时
+      </view>
+    </view>
+
+    <view wx:if="{{todayRecords.length === 0}}" class="empty">
+      <view class="empty__icon">📝</view>
+      <view>今天还没有记录，上面先记一笔吧</view>
+    </view>
+
+    <view
+      class="rec-item"
+      wx:for="{{todayRecords}}"
+      wx:key="id"
+      wx:for-index="idx"
+    >
+      <!-- 第一列：班次 + 记录类型 / 起止时间 -->
+      <view class="rec-item__col rec-item__col--shift">
+        <view class="badge badge--{{item.theme}}">{{item.shift}}</view>
+        <view class="rec-item__type">{{item.typeLabel}}</view>
+        <view class="rec-item__time" wx:if="{{item.timeText}}">{{item.timeText}}</view>
+      </view>
+
+      <!-- 第二列：小时数 + 工时 -->
+      <view class="rec-item__col rec-item__col--hours">
+        <view class="rec-item__hours">
+          <text class="num">{{item.hours}}</text>
+          <text class="rec-item__h">小时</text>
+        </view>
+        <view class="rec-item__units">{{item.units}} 工时</view>
+      </view>
+
+      <!-- 第三列：删除 -->
+      <view class="rec-item__col rec-item__col--del">
+        <view class="rec-item__del" data-id="{{item.id}}" data-idx="{{idx}}" bindtap="onDeleteRecord">
+          删除
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="foot-space"></view>
+</view>
+
+<!-- ========== 班制选择弹层 ========== -->
+<view class="mask" wx:if="{{showShiftPicker}}" bindtap="onSheetMask"></view>
+<view class="sheet {{showShiftPicker ? 'sheet--show' : ''}}">
+  <view class="sheet__bar"></view>
+  <view class="sheet__title">① 选择班制</view>
+  <view class="type-row">
+    <view
+      wx:for="{{shiftTypes}}"
+      wx:key="key"
+      class="type-card {{pickerType === item.key ? 'is-active' : ''}}"
+      data-type="{{item.key}}"
+      bindtap="onPickType"
+    >
+      <view class="type-card__name">{{item.label}}</view>
+      <view class="type-card__sub">{{item.desc}}</view>
+    </view>
+  </view>
+
+  <view class="sheet__title">② 选择班次</view>
+  <view class="shift-row">
+    <view
+      wx:for="{{pickerShifts}}"
+      wx:key="name"
+      class="shift-chip {{pickerShift === item.name ? 'is-active shift-chip--' + item.theme : ''}}"
+      data-shift="{{item.name}}"
+      bindtap="onPickShift"
+    >
+      {{item.name}}
+    </view>
+  </view>
+
+  <view class="big-btn big-btn--primary" bindtap="onConfirmShift">确 定</view>
+  <view class="sheet__close" wx:if="{{!isFirstSet}}" bindtap="closeShiftPicker">取消</view>
+</view>
+
+<!-- ========== 记录结果弹层 ========== -->
+<view class="mask" wx:if="{{result.visible}}" bindtap="closeResult"></view>
+<view class="result" wx:if="{{result.visible}}">
+  <view class="result__icon">✅</view>
+  <view class="result__title">{{result.title}}</view>
+  <view class="result__rows">
+    <view class="result__row" wx:for="{{result.rows}}" wx:key="k">
+      <text class="result__k">{{item.k}}</text>
+      <text class="result__v num">{{item.v}}</text>
+    </view>
+  </view>
+  <view class="big-btn big-btn--primary" bindtap="closeResult">知 道 了</view>
+</view>
+
+<!-- TDesign 轻提示 -->
+<t-toast id="t-toast" />
+
+<!-- TDesign 结果 / 确认弹窗 -->
+<t-dialog
+  visible="{{dialog.visible}}"
+  title="{{dialog.title}}"
+  content="{{dialog.content}}"
+  confirm-btn="{{dialog.confirmText}}"
+  cancel-btn="{{dialog.cancelText}}"
+  bind:confirm="onDialogConfirm"
+  bind:cancel="onDialogCancel"
+  t-class-content="dialog-content--big"
+/>

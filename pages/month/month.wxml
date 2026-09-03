@@ -1,0 +1,184 @@
+<view class="page">
+  <!-- 月份切换 -->
+  <view class="card month-nav">
+    <view class="month-nav__btn" bindtap="onPrevMonth">‹ 上月</view>
+    <picker mode="date" fields="month" value="{{ym}}" bindchange="onMonthChange">
+      <view class="month-nav__ym">{{ymText}} ▾</view>
+    </picker>
+    <view class="month-nav__btn" bindtap="onNextMonth">下月 ›</view>
+  </view>
+
+  <!-- 本月汇总 -->
+  <view class="card sum-card">
+    <view class="sum-card__row">
+      <view class="sum-card__k">本月总工时</view>
+      <view class="sum-card__big">
+        <text class="num sum-card__num">{{totalHours}}</text>
+        <text class="sum-card__u">小时</text>
+      </view>
+    </view>
+    <view class="sum-card__grid">
+      <view class="sum-card__item">
+        <view class="sum-card__v num">{{totalUnits}}</view>
+        <view class="sum-card__label">折合工时（个）</view>
+      </view>
+      <view class="sum-card__item">
+        <view class="sum-card__v num">{{workDays}}</view>
+        <view class="sum-card__label">出勤天数</view>
+      </view>
+      <view class="sum-card__item">
+        <view class="sum-card__v num">{{avgHours}}</view>
+        <view class="sum-card__label">日均（小时）</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 三列表格 -->
+  <view class="card">
+    <view class="section-title">{{ymText}} 出勤明细</view>
+
+    <view class="table">
+      <view class="table__head">
+        <view class="table__th table__c1">日期</view>
+        <view class="table__th table__c2">班次</view>
+        <view class="table__th table__c3">工时数</view>
+      </view>
+
+      <view wx:if="{{rows.length === 0}}" class="empty">
+        <view class="empty__icon">📭</view>
+        <view>本月还没有记录，点上方「记工时」开始</view>
+      </view>
+
+      <view
+        class="table__row {{index % 2 === 1 ? 'table__row--odd' : ''}}"
+        wx:for="{{rows}}"
+        wx:key="date"
+        data-date="{{item.date}}"
+        bindtap="onRowTap"
+        hover-class="table__row--hover"
+      >
+        <view class="table__td table__c1">
+          <view class="table__md">{{item.md}}</view>
+          <view class="table__week">{{item.week}}</view>
+        </view>
+        <view class="table__td table__c2">
+          <view
+            class="badge badge--sm badge--{{s.theme}}"
+            wx:for="{{item.shiftList}}"
+            wx:for-item="s"
+            wx:key="name"
+          >
+            {{s.name}}
+          </view>
+        </view>
+        <view class="table__td table__c3">
+          <view class="table__hours">
+            <text class="num">{{item.hours}}</text>
+            <text class="table__h">小时</text>
+          </view>
+          <view class="table__units">≈ {{item.units}} 工时</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="table__tip">点上面任意一天，可查看明细或补记工时</view>
+
+    <view
+      class="big-btn big-btn--ghost mt-24 {{rows.length ? '' : 'big-btn--disabled'}}"
+      bindtap="onCopyMonth"
+    >
+      复制本月工时表
+    </view>
+  </view>
+
+  <view class="foot-space"></view>
+</view>
+
+<!-- ========== 当天明细 / 补记弹层 ========== -->
+<view class="mask" wx:if="{{daySheet.visible}}" bindtap="closeDaySheet"></view>
+<view class="sheet sheet--tall {{daySheet.visible ? 'sheet--show' : ''}}">
+  <view class="sheet__bar"></view>
+  <scroll-view scroll-y class="sheet__scroll">
+    <view class="sheet__title">{{daySheet.title}}</view>
+
+    <block wx:if="{{daySheet.records.length}}">
+      <view class="day-rec" wx:for="{{daySheet.records}}" wx:key="id">
+        <view class="day-rec__l">
+          <text class="badge badge--sm badge--{{item.theme}}">{{item.shift}}</text>
+          <text class="day-rec__time">{{item.timeText}}</text>
+        </view>
+        <view class="day-rec__r">
+          <text class="num day-rec__h">{{item.hours}}</text>
+          <text class="day-rec__u">小时</text>
+          <text class="day-rec__del" data-id="{{item.id}}" bindtap="onDeleteOne">删除</text>
+        </view>
+      </view>
+      <view class="day-sum">
+        当天合计 <text class="num">{{daySheet.totalHours}}</text> 小时
+        （≈ <text class="num">{{daySheet.totalUnits}}</text> 工时）
+      </view>
+    </block>
+    <view wx:else class="empty empty--in-sheet">
+      <view class="empty__icon">📭</view>
+      <view>这天还没有记录</view>
+    </view>
+
+    <view class="sheet__title">补记这一天的工时</view>
+    <view class="shift-row">
+      <view
+        wx:for="{{addShifts}}"
+        wx:key="name"
+        class="shift-chip {{addShift === item.name ? 'is-active' : ''}}"
+        data-shift="{{item.name}}"
+        bindtap="onPickAddShift"
+      >
+        {{item.name}}
+      </view>
+    </view>
+
+    <view class="hour-grid">
+      <view
+        wx:for="{{hourOptions}}"
+        wx:key="*this"
+        class="hour-cell {{addHour === item ? 'is-active' : ''}}"
+        data-hour="{{item}}"
+        bindtap="onPickAddHour"
+      >
+        {{item}} 小时
+      </view>
+    </view>
+
+    <view class="calc-box" wx:if="{{addHour}}">
+      <view class="calc-box__line">
+        <text class="calc-box__k">补记时长</text>
+        <text class="calc-box__v num">{{addHour}} 小时</text>
+      </view>
+      <view class="calc-box__line">
+        <text class="calc-box__k">折合工时</text>
+        <text class="calc-box__v calc-box__v--big num">{{addUnits}}</text>
+        <text class="calc-box__unit">个</text>
+      </view>
+    </view>
+
+    <view
+      class="big-btn {{addHour ? 'big-btn--primary' : 'big-btn--disabled'}}"
+      bindtap="onSaveAdd"
+    >
+      保 存 补 记
+    </view>
+    <view class="sheet__close" bindtap="closeDaySheet">关闭</view>
+  </scroll-view>
+</view>
+
+<!-- TDesign 轻提示 / 确认弹窗 -->
+<t-toast id="t-toast" />
+<t-dialog
+  visible="{{dialog.visible}}"
+  title="{{dialog.title}}"
+  content="{{dialog.content}}"
+  confirm-btn="{{dialog.confirmText}}"
+  cancel-btn="{{dialog.cancelText}}"
+  bind:confirm="onDialogConfirm"
+  bind:cancel="onDialogCancel"
+  t-class-content="dialog-content--big"
+/>

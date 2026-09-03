@@ -1,0 +1,320 @@
+/* ============ 全局样式：大字体 · 高对比 · 适老版 ============ */
+page {
+  /* 主色与中性色 */
+  --c-primary: #0052d9;
+  --c-primary-light: #e7f0ff;
+  --c-bg: #f2f4f7;
+  --c-card: #ffffff;
+  --c-text: #1a1a1a;
+  --c-text-2: #4e5969;
+  --c-text-3: #8a94a6;
+  --c-border: #e3e6eb;
+  --c-line: #f0f2f5;
+
+  /* 班次配色 */
+  --c-day: #f5a623;   /* 白班 */
+  --c-day-bg: #fff6e6;
+  --c-mid: #00a870;   /* 中班 */
+  --c-mid-bg: #e6f7f1;
+  --c-night: #5b4bd6; /* 夜班 */
+  --c-night-bg: #efedfd;
+  --c-danger: #e34d59;
+
+  /* 字号（适老放大） */
+  --fs-xs: 28rpx;
+  --fs-sm: 30rpx;
+  --fs-md: 34rpx;
+  --fs-lg: 38rpx;
+  --fs-xl: 44rpx;
+  --fs-xxl: 56rpx;
+  --fs-huge: 84rpx;
+
+  /* 尺寸 */
+  --radius: 20rpx;
+  --btn-h: 132rpx;
+
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: var(--fs-md);
+  line-height: 1.7;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+}
+
+view,
+text,
+button,
+input,
+picker {
+  box-sizing: border-box;
+}
+
+/* 通用卡片 */
+.card {
+  background: var(--c-card);
+  border-radius: var(--radius);
+  padding: 32rpx;
+  margin: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+/* 区块标题 */
+.section-title {
+  font-size: 46rpx;
+  font-weight: 700;
+  color: var(--c-text);
+  margin: 8rpx 0 24rpx;
+  padding-left: 20rpx;
+  border-left: 10rpx solid var(--c-primary);
+  line-height: 1.2;
+}
+
+/* 通用大按钮（原生 view 实现，字号完全可控） */
+.big-btn {
+  height: var(--btn-h);
+  line-height: var(--btn-h);
+  text-align: center;
+  border-radius: var(--radius);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: 2rpx;
+}
+.big-btn--primary {
+  background: var(--c-primary);
+  color: #fff;
+}
+.big-btn--primary:active {
+  background: #003cab;
+}
+.big-btn--ghost {
+  background: #fff;
+  color: var(--c-primary);
+  border: 4rpx solid var(--c-primary);
+}
+.big-btn--ghost:active {
+  background: var(--c-primary-light);
+}
+.big-btn--gray {
+  background: #eef0f3;
+  color: var(--c-text-2);
+}
+.big-btn--disabled {
+  background: #dcdfe4;
+  color: #a3a8b0;
+}
+
+/* 数字强调 */
+.num {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 班次徽标（全局复用：白班橙 / 中班绿 / 夜班紫） */
+.badge {
+  display: inline-block;
+  padding: 6rpx 28rpx;
+  border-radius: 12rpx;
+  font-size: 38rpx;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.badge--day {
+  color: #a35b00;
+  background: #fff6e6;
+  border: 2rpx solid #f5a623;
+}
+.badge--mid {
+  color: #007a52;
+  background: #e6f7f1;
+  border: 2rpx solid #00a870;
+}
+.badge--night {
+  color: #3d2fb5;
+  background: #efedfd;
+  border: 2rpx solid #5b4bd6;
+}
+.badge--sm {
+  font-size: 30rpx;
+  padding: 4rpx 18rpx;
+  margin: 4rpx;
+}
+
+/* 空状态 */
+.empty {
+  padding: 120rpx 40rpx;
+  text-align: center;
+  color: var(--c-text-3);
+  font-size: var(--fs-md);
+}
+.empty__icon {
+  font-size: 120rpx;
+  line-height: 1;
+  margin-bottom: 24rpx;
+}
+
+/* ============ 通用弹层与选择器（多页复用） ============ */
+
+/* 小时格子：1-12 小时选择 */
+.hour-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.hour-cell {
+  width: 23.5%;
+  height: 132rpx;
+  line-height: 132rpx;
+  text-align: center;
+  font-size: 42rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+  background: #f2f4f7;
+  border: 3rpx solid #e3e6eb;
+  border-radius: 16rpx;
+  margin-bottom: 18rpx;
+}
+.hour-cell.is-active {
+  background: #0052d9;
+  border-color: #0052d9;
+  color: #fff;
+}
+.hour-cell:active {
+  opacity: 0.75;
+}
+/* ---------------- 遮罩与底部弹层 ---------------- */
+.mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 900;
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 901;
+  background: #fff;
+  border-radius: 28rpx 28rpx 0 0;
+  padding: 24rpx 32rpx calc(40rpx + env(safe-area-inset-bottom));
+  transform: translateY(110%);
+  transition: transform 0.25s ease;
+}
+.sheet--show {
+  transform: translateY(0);
+}
+.sheet__bar {
+  width: 88rpx;
+  height: 8rpx;
+  background: #dcdfe4;
+  border-radius: 4rpx;
+  margin: 0 auto 20rpx;
+}
+.sheet__title {
+  font-size: 40rpx;
+  font-weight: 700;
+  margin: 18rpx 0 20rpx;
+}
+
+.type-row {
+  display: flex;
+  justify-content: space-between;
+}
+.type-card {
+  width: 48.5%;
+  padding: 32rpx 20rpx;
+  text-align: center;
+  background: #f2f4f7;
+  border: 4rpx solid #e3e6eb;
+  border-radius: 18rpx;
+}
+.type-card.is-active {
+  background: #e7f0ff;
+  border-color: #0052d9;
+}
+.type-card__name {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.type-card__sub {
+  font-size: 30rpx;
+  color: #8a94a6;
+  margin-top: 8rpx;
+}
+
+.shift-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 36rpx;
+}
+.shift-chip {
+  width: 31%;
+  margin-right: 3.5%;
+  margin-bottom: 20rpx;
+  height: 116rpx;
+  line-height: 116rpx;
+  text-align: center;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+  background: #f2f4f7;
+  border: 4rpx solid #e3e6eb;
+  border-radius: 18rpx;
+}
+.shift-chip:nth-child(3n) {
+  margin-right: 0;
+}
+.shift-chip.is-active {
+  background: #0052d9;
+  border-color: #0052d9;
+  color: #fff;
+}
+
+.sheet__close {
+  text-align: center;
+  font-size: 34rpx;
+  color: #8a94a6;
+  padding: 28rpx 0 0;
+}
+
+/* 折算结果（首页/补记复用） */
+/* ---------------- 折算结果 ---------------- */
+.calc-box {
+  background: #e7f0ff;
+  border-radius: 16rpx;
+  padding: 24rpx 28rpx;
+  margin: 12rpx 0 32rpx;
+}
+.calc-box__line {
+  display: flex;
+  align-items: baseline;
+  padding: 8rpx 0;
+}
+.calc-box__k {
+  font-size: 34rpx;
+  color: #4e5969;
+  width: 160rpx;
+}
+.calc-box__v {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #0052d9;
+}
+.calc-box__v--big {
+  font-size: 60rpx;
+}
+.calc-box__unit {
+  font-size: 34rpx;
+  color: #4e5969;
+  margin-left: 8rpx;
+}
+.calc-box__note {
+  font-size: 30rpx;
+  color: #8a94a6;
+  margin-top: 6rpx;
+}

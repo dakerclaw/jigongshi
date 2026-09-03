@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "记工时",
+  "usingComponents": {
+    "t-dialog": "tdesign-miniprogram/dialog/dialog",
+    "t-toast": "tdesign-miniprogram/toast/toast"
+  }
+}

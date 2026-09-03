@@ -1,0 +1,37 @@
+{
+  "pages": [
+    "pages/record/record",
+    "pages/month/month",
+    "pages/history/history"
+  ],
+  "window": {
+    "navigationBarTitleText": "",
+    "navigationBarBackgroundColor": "#0052D9",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F2F4F7",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#7A7A7A",
+    "selectedColor": "#0052D9",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/record/record",
+        "text": "记工时"
+      },
+      {
+        "pagePath": "pages/month/month",
+        "text": "月度记录"
+      },
+      {
+        "pagePath": "pages/history/history",
+        "text": "历史查询"
+      }
+    ]
+  },
+  "permission": {},
+  "sitemapLocation": "sitemap.json"
+}

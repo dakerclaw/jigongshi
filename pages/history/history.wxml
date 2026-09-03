@@ -1,0 +1,74 @@
+<view class="page">
+  <!-- 月份选择 -->
+  <view class="card">
+    <view class="picker-row">
+      <view class="picker-row__label">查询月份</view>
+      <picker mode="date" fields="month" value="{{ym}}" bindchange="onMonthChange">
+        <view class="picker-row__value">{{ymText}} ▾</view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 汇总 -->
+  <view class="card sum-card">
+    <view class="sum-card__row">
+      <view class="sum-card__k">{{ymText}} 出勤总工时</view>
+      <view class="sum-card__big">
+        <text class="num sum-card__num">{{totalHours}}</text>
+        <text class="sum-card__u">小时</text>
+      </view>
+    </view>
+    <view class="sum-card__grid">
+      <view class="sum-card__item">
+        <view class="sum-card__v num">{{totalUnits}}</view>
+        <view class="sum-card__label">折合工时（个）</view>
+      </view>
+      <view class="sum-card__item">
+        <view class="sum-card__v num">{{workDays}}</view>
+        <view class="sum-card__label">出勤天数</view>
+      </view>
+      <view class="sum-card__item">
+        <view class="sum-card__v num">{{avgHours}}</view>
+        <view class="sum-card__label">日均（小时）</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 班次分布 -->
+  <view class="card" wx:if="{{shiftStat.length}}">
+    <view class="section-title">班次分布</view>
+    <view class="stat-row" wx:for="{{shiftStat}}" wx:key="name">
+      <view class="stat-row__name badge badge--sm badge--{{item.theme}}">{{item.name}}</view>
+      <view class="stat-row__bar">
+        <view class="stat-row__fill stat-row__fill--{{item.theme}}" style="width:{{item.pct}}%"></view>
+      </view>
+      <view class="stat-row__v">
+        <text class="num">{{item.hours}}</text>
+        <text class="stat-row__u">h</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 各月对比 -->
+  <view class="card" wx:if="{{monthStat.length}}">
+    <view class="section-title">各月总工时对比</view>
+    <view
+      class="bar-item {{item.ym === ym ? 'is-active' : ''}}"
+      wx:for="{{monthStat}}"
+      wx:key="ym"
+      data-ym="{{item.ym}}"
+      bindtap="onPickBar"
+    >
+      <view class="bar-item__label">{{item.label}}</view>
+      <view class="bar-item__track">
+        <view
+          class="bar-item__fill {{item.ym === ym ? 'is-active' : ''}}"
+          style="width:{{item.pct}}%"
+        ></view>
+      </view>
+      <view class="bar-item__v"><text class="num">{{item.hours}}</text> 小时</view>
+    </view>
+  </view>
+
+  <view class="foot-space"></view>
+</view>
