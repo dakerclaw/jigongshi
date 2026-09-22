@@ -36,6 +36,10 @@
         "type": "file"
       },
       {
+        "value": "LICENSE",
+        "type": "file"
+      },
+      {
         "value": "**/.DS_Store",
         "type": "file"
       },

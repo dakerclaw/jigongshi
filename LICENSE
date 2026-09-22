@@ -1,0 +1,131 @@
+【版权私有声明 · PROPRIETARY COPYRIGHT NOTICE】
+
+版权所有 © 2026 dakerclaw。保留所有权利。
+Copyright © 2026 dakerclaw. All rights reserved.
+
+项目名称：记工时（微信小程序名称：出勤轻松记）
+AppID：wx814f470502aa07ad
+代码仓库：https://github.com/dakerclaw/jigongshi
+著作权人：dakerclaw
+联系方式：program@hehudieyiqi.com
+本声明生效日期：2026 年 9 月 23 日
+
+本软件（包括但不限于源代码、页面结构、样式表、图形界面、图标、文案、数据结构与算法设计，以下统称「本软件」）由著作权人独立开发完成，著作权归其单独所有。本软件为**专有软件（proprietary software），并非开源软件**，未以任何开源许可协议发布。
+
+
+────────────────────────────────────────
+一、权利归属
+────────────────────────────────────────
+
+1. 本软件的全部著作权（包括发表权、署名权、修改权、保护作品完整权、复制权、发行权、信息网络传播权、改编权及其他财产权利）均归著作权人所有，受《中华人民共和国著作权法》及适用的国际著作权条约保护。
+
+2. 本软件运行中产生的用户数据（出勤起止时间、工时记录等）仅保存在用户本机微信 Storage 中，属于用户个人数据，不属于本软件的组成部分，著作权人不收集、不上传、不持有此类数据。详见《用户隐私保护指引》（PRIVACY.md）。
+
+3. 本软件仓库对公众可见，仅出于代码浏览与版本管理之目的，**不构成任何形式的授权、许可或权利让与**。可见不等于可用。
+
+
+────────────────────────────────────────
+二、明确不授予的权利
+────────────────────────────────────────
+
+除第三条明确列出的有限许可外，未经著作权人事先书面许可，任何人不得：
+
+1. 复制、另行下载保存、修改、翻译、汇编、演绎本软件的全部或任何部分；
+
+2. 再发布、分发、出租、出借、转授权、出售本软件，或将其作为服务对外提供；
+
+3. 将本软件用于任何商业目的，包括但不限于企业内部的工时管理、SaaS 服务、付费产品、外包交付或与其他产品捆绑；
+
+4. 将本软件或其衍生版本上传、发布、上架至任何其他平台（包括但不限于其他小程序平台、应用商店、代码托管平台、论坛、网盘、公众号资源包）；
+
+5. 移除、遮蔽或篡改本软件中的版权声明、作者署名、版本信息及任何权利标识；
+
+6. 使用「记工时」「出勤轻松记」名称、标识、图标或界面设计申请商标注册、软件著作权登记或其他知识产权；
+
+7. 将本软件源代码用于训练、微调、蒸馏任何人工智能模型，或用于构建以商业分发为目的的代码数据集。
+
+
+────────────────────────────────────────
+三、有限许可（唯一例外）
+────────────────────────────────────────
+
+著作权人仅授予下列不可转让、不可再许可、非排他的有限许可：
+
+1. 在 GitHub 平台内浏览本仓库源代码；
+
+2. 为个人学习、技术研究或技术评估之目的阅读、运行本软件，并在**不公开、不再分发**的前提下作局部试验性修改；
+
+3. 在 GitHub 平台功能范围内创建 Fork，仅用于个人备份。
+
+上述许可**不适用于任何以营利为目的的使用**，且在任何情况下均不豁免第二条所禁止的行为。许可自使用者违反本声明之日起自动终止，届时使用者应立即停止使用并销毁全部副本。
+
+
+────────────────────────────────────────
+四、第三方组件
+────────────────────────────────────────
+
+1. 本软件为纯原生实现，不依赖第三方 UI 组件库，不接入任何统计、广告、推送或第三方 SDK。
+
+2. 日后如引入第三方开源组件，该组件部分仍适用其原有许可协议，著作权人对此不主张权利；本声明仅适用于著作权人自行开发的部分。
+
+
+────────────────────────────────────────
+五、免责声明
+────────────────────────────────────────
+
+1. 本软件按「现状」提供，不附带任何明示或默示的担保，包括但不限于对适销性、特定用途适用性及不侵权的担保。
+
+2. 本软件仅为个人工时记录工具。其计算结果（含「8 小时 = 1 个工时」「出勤时长不足 1 小时舍去」「按班制封顶」等规则）**不构成任何劳动报酬结算依据或法律意见**，用户应自行与用人单位核对考勤与薪酬。
+
+3. 在法律允许的最大范围内，著作权人不对因使用或无法使用本软件而产生的任何直接、间接、附带或后果性损失承担责任。
+
+
+────────────────────────────────────────
+六、权利主张与救济
+────────────────────────────────────────
+
+1. 任何违反本声明的行为均构成对著作权人合法权益的侵害。著作权人保留追究其法律责任的权利，包括但不限于要求立即停止侵权、删除侵权内容、公开消除影响、赔偿损失，以及承担为维权支出的合理费用（含公证费、律师费）。
+
+2. 发现侵权行为，或希望就商业使用、定制开发取得授权，请联系：program@hehudieyiqi.com
+
+
+────────────────────────────────────────
+七、其他
+────────────────────────────────────────
+
+1. 本声明的解释与由此产生的争议解决，适用中华人民共和国法律。
+
+2. 著作权人保留随时修订本声明的权利。声明如有更新，以本文件最新版本为准，并自发布之日起生效。
+
+3. 本声明以中文文本为准；下方英文文本仅为便于理解，如与中文文本存在歧义，以中文文本为准。
+
+
+────────────────────────────────────────
+ENGLISH NOTICE (reference only / 仅供参考)
+────────────────────────────────────────
+
+Copyright © 2026 dakerclaw. All rights reserved.
+
+This software, the WeChat Mini Program "出勤轻松记" (project name: jigongshi, AppID
+wx814f470502aa07ad), including but not limited to its source code, page structure,
+stylesheets, user interface, icons, text content and data structures, is PROPRIETARY
+software. It is NOT released under any open-source license.
+
+The source repository is publicly visible for browsing and version control purposes
+only. Public visibility does NOT grant any license, and no rights are transferred.
+
+Without the prior written permission of the copyright owner, you may NOT copy,
+modify, translate, redistribute, sublicense, sell, or use this software for any
+commercial purpose, nor upload it to any other platform.
+
+The only permitted uses are: browsing the source within the GitHub platform;
+reading or running the software for personal study or technical evaluation; and
+creating a GitHub fork for personal backup - in each case provided that you do NOT
+redistribute it publicly. All permissions terminate automatically upon any breach
+of this notice.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+IN NO EVENT SHALL THE COPYRIGHT OWNER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+For licensing or business inquiries, contact: program@hehudieyiqi.com
