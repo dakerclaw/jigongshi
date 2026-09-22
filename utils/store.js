@@ -55,26 +55,11 @@ function removeRecord(id) {
   return list;
 }
 
-function clearAll() {
-  saveRecords([]);
-  safeSet(KEY_PENDING, null);
-}
-
 /** 取某月记录 ym = '2026-09'，按日期升序 */
 function getRecordsByMonth(ym) {
   return getRecords()
     .filter((r) => (r.date || '').slice(0, 7) === ym)
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.createdAt - b.createdAt));
-}
-
-/** 存在记录的所有月份（倒序） */
-function getAvailableMonths() {
-  const set = {};
-  getRecords().forEach((r) => {
-    const ym = (r.date || '').slice(0, 7);
-    if (ym) set[ym] = true;
-  });
-  return Object.keys(set).sort((a, b) => (a < b ? 1 : -1));
 }
 
 /* ---------------- 未完成打卡 ---------------- */
@@ -107,9 +92,7 @@ module.exports = {
   saveRecords,
   addRecord,
   removeRecord,
-  clearAll,
   getRecordsByMonth,
-  getAvailableMonths,
   getPending,
   setPending,
   clearPending,

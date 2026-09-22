@@ -1,8 +1,8 @@
 {
-  "description": "记工时 · 适老版工时记录小程序",
+  "description": "记工时 · 工时记录小程序",
   "compileType": "miniprogram",
   "libVersion": "3.5.5",
-  "appid": "wx7fa5658ffa91d61e",
+  "appid": "wx814f470502aa07ad",
   "projectname": "jigongshi",
   "miniprogramRoot": "./",
   "packOptions": {
@@ -41,13 +41,6 @@
     "enableEngineNative": false,
     "useIsolateContext": true,
     "userConfirmedBundleSwitch": false,
-    "packNpmManually": true,
-    "packNpmRelationList": [
-      {
-        "packageJsonPath": "./package.json",
-        "miniprogramNpmDistDir": "./"
-      }
-    ],
     "minifyWXSS": true,
     "showES6CompileOption": false,
     "compileWorklet": false,
@@ -56,7 +49,9 @@
     "localPlugins": false,
     "disableUseStrict": false,
     "useCompilerPlugins": false,
-    "condition": false
+    "condition": false,
+    "packNpmManually": false,
+    "packNpmRelationList": []
   },
   "condition": {},
   "editorSetting": {

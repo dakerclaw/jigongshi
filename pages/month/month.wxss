@@ -8,13 +8,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20rpx 24rpx;
+  padding: 16rpx 24rpx;
 }
 .month-nav__btn {
-  padding: 0 32rpx;
+  padding: 0 20rpx;
   height: 96rpx;
   line-height: 96rpx;
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: #0052d9;
   background: #e7f0ff;
@@ -24,7 +24,7 @@
   background: #cfe0ff;
 }
 .month-nav__ym {
-  font-size: 40rpx;
+  font-size: 34rpx;
   white-space: nowrap;
   font-weight: 700;
   color: #1a1a1a;
@@ -94,6 +94,12 @@
   color: #1a1a1a;
   text-align: center;
 }
+.table__sort {
+  font-style: normal;
+  font-size: 28rpx;
+  color: #8a94a6;
+  margin-left: 6rpx;
+}
 .table__c1 {
   width: 30%;
   text-align: center;
@@ -110,14 +116,14 @@
 .table__row {
   display: flex;
   align-items: center;
-  min-height: 140rpx;
+  min-height: 112rpx;
   border-top: 2rpx solid #f0f2f5;
 }
 .table__row--odd {
   background: #fafbfc;
 }
 .table__td {
-  padding: 18rpx 0;
+  padding: 14rpx 0;
   text-align: center;
 }
 .table__c3 {
@@ -134,7 +140,7 @@
   font-size: 28rpx;
   color: #8a94a6;
   text-align: center;
-  margin-top: 4rpx;
+  margin-top: 2rpx;
 }
 .table__hours {
   color: #1a1a1a;
@@ -154,8 +160,13 @@
   margin-top: 2rpx;
 }
 
+/* 无出勤日期的班次占位 */
+.table__none {
+  color: #a3a8b0;
+}
+
 .mt-24 {
-  margin-top: 24rpx;
+  margin-top: 16rpx;
 }
 
 /* 行点击反馈 */
@@ -163,18 +174,15 @@
   background: #e7f0ff;
 }
 .table__tip {
-  margin-top: 20rpx;
+  margin-top: 16rpx;
   text-align: center;
   font-size: 30rpx;
   color: #8a94a6;
 }
 
-/* 补记弹层：可滚动 */
+/* 补记弹层：内容更高（滚动由全局 .sheet__body 承担，底栏固定） */
 .sheet--tall {
-  max-height: 88vh;
-}
-.sheet__scroll {
-  max-height: 78vh;
+  max-height: 90vh;
 }
 
 /* 当天记录 */
@@ -182,7 +190,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20rpx 0;
+  padding: 6rpx 0;
   border-bottom: 2rpx solid #f0f2f5;
 }
 .day-rec__l {
@@ -193,7 +201,13 @@
   display: block;
   font-size: 30rpx;
   color: #8a94a6;
-  margin-top: 6rpx;
+  margin-top: 0;
+}
+.day-rec__cap {
+  display: block;
+  font-size: 26rpx;
+  color: #b25e09;
+  margin-top: 2rpx;
 }
 .day-rec__r {
   flex-shrink: 0;
@@ -218,8 +232,8 @@
   border-radius: 10rpx;
 }
 .day-sum {
-  margin-top: 20rpx;
-  padding: 20rpx 24rpx;
+  margin-top: 4rpx;
+  padding: 8rpx 20rpx;
   background: #e7f0ff;
   border-radius: 14rpx;
   font-size: 36rpx;
@@ -233,15 +247,9 @@
 }
 
 .empty--in-sheet {
-  padding: 40rpx 0;
-}
-
-/* TDesign 弹窗字号放大 */
-.dialog-content--big {
-  font-size: 36rpx !important;
-  line-height: 1.7 !important;
+  padding: 12rpx 0;
 }
 
 .foot-space {
-  height: 20rpx;
+  height: 12rpx;
 }

@@ -32,6 +32,7 @@
       }
     ]
   },
+  "lazyCodeLoading": "requiredComponents",
   "permission": {},
   "sitemapLocation": "sitemap.json"
 }

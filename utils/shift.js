@@ -20,6 +20,17 @@ function labelOf(type) {
   return t ? t.label : '';
 }
 
+/**
+ * 各班制的计酬工时上限（小时）
+ * 12 小时班制：出勤超过 12 小时，按 12 小时计入工时
+ * 8 小时班制 ：出勤超过 8 小时，按 8 小时计入工时
+ */
+const MAX_HOURS = { '12h': 12, '8h': 8 };
+
+function maxHoursOf(type) {
+  return MAX_HOURS[type] || MAX_HOURS['12h'];
+}
+
 /** 班次 -> 样式后缀（day / mid / night） */
 function themeOf(shift) {
   if (shift === '夜班') return 'night';
@@ -35,5 +46,7 @@ module.exports = {
   shiftsOf,
   labelOf,
   themeOf,
+  MAX_HOURS,
+  maxHoursOf,
   HOUR_OPTIONS,
 };

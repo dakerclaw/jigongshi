@@ -1,13 +1,9 @@
 const store = require('../../utils/store.js');
 const time = require('../../utils/time.js');
 const shiftUtil = require('../../utils/shift.js');
-const Toast = require('tdesign-miniprogram/toast/index');
+const { toast, confirmDialog } = require('../../utils/ui.js');
 
 const app = getApp();
-
-function toast(page, message) {
-  Toast({ context: page, selector: '#t-toast', message: message, duration: 2000 });
-}
 
 Page({
   data: {
@@ -46,18 +42,7 @@ Page({
     pickerShift: '白班',
 
     // 结果弹层
-    result: { visible: false, title: '', rows: [] },
-
-    // TDesign 确认弹窗
-    dialog: {
-      visible: false,
-      title: '',
-      content: '',
-      confirmText: '确定',
-      cancelText: '取消',
-      action: '',
-      delId: '',
-    },
+    result: { visible: false, title: '', rows: [], note: '' },
   },
 
   timer: null,
@@ -210,15 +195,15 @@ Page({
   },
 
   onCancelClock() {
-    this.setData({
-      dialog: {
-        visible: true,
-        title: '取消本次上班打卡？',
-        content: '取消后不会生成今天的工时记录。',
-        confirmText: '取消打卡',
-        cancelText: '再想想',
-        action: 'cancelClock',
-        delId: '',
+    confirmDialog({
+      title: '取消本次上班打卡？',
+      content: '取消后不会生成今天的工时记录。',
+      confirmText: '取消打卡',
+      cancelText: '再想想',
+      onConfirm: () => {
+        store.clearPending();
+        this.setData({ pending: null });
+        toast(this, '已取消本次上班打卡');
       },
     });
   },
@@ -230,40 +215,34 @@ Page({
       return;
     }
     const n = time.now();
-    const r = time.calcWork(p.startTs, n.ts);
+    // 计酬上限按「上班打卡时所属班制」计算
+    const cap = shiftUtil.maxHoursOf(p.shiftType || this.data.shiftType);
+    const r = time.calcWork(p.startTs, n.ts, cap);
 
-    if (r.hours < 1) {
-      this.setData({
-        dialog: {
-          visible: true,
-          title: '出勤不足 1 小时',
-          content:
-            '本次出勤 ' +
-            time.durationText(r.minutes) +
-            '，不足 1 小时的部分要舍去，折算为 0 工时。要保存吗？',
-          confirmText: '仍然保存',
-          cancelText: '不保存',
-          action: 'saveZero',
-          delId: '',
-        },
+    if (r.rawHours < 1) {
+      confirmDialog({
+        title: '出勤不足 1 小时',
+        content:
+          '本次出勤 ' +
+          time.durationText(r.minutes) +
+          '，不足 1 小时的部分要舍去，折算为 0 工时。要保存吗？',
+        confirmText: '仍然保存',
+        cancelText: '不保存',
+        onConfirm: () => this.saveTimeRecordNow(),
       });
       return;
     }
 
     if (r.tooLong) {
-      this.setData({
-        dialog: {
-          visible: true,
-          title: '是否忘记打卡？',
-          content:
-            '本次时长 ' +
-            time.durationText(r.minutes) +
-            '，已超过 16 小时。若忘记打下班卡，建议先取消本次上班。',
-          confirmText: '按此保存',
-          cancelText: '取消打卡',
-          action: 'saveLong',
-          delId: '',
-        },
+      confirmDialog({
+        title: '是否忘记打卡？',
+        content:
+          '本次时长 ' +
+          time.durationText(r.minutes) +
+          '，已超过 16 小时。若忘记打下班卡，建议先取消本次上班。',
+        confirmText: '按此保存',
+        cancelText: '取消打卡',
+        onConfirm: () => this.saveTimeRecordNow(),
       });
       return;
     }
@@ -272,16 +251,20 @@ Page({
   },
 
   doSaveTimeRecord(p, n, r) {
+    const shiftType = p.shiftType || this.data.shiftType;
     const rec = {
       date: p.date,
       endDate: n.ymd,
-      shiftType: p.shiftType,
+      shiftType: shiftType,
       shift: p.shift,
       mode: 'time',
       startTime: p.startTime,
       endTime: n.hm,
-      minutes: r.minutes,
-      hours: r.hours,
+      minutes: r.minutes, // 原始出勤分钟数
+      rawHours: r.rawHours, // 原始出勤整小时数
+      hours: r.hours, // 计入工时的整小时数（已按班制上限截断）
+      cap: r.cap,
+      capped: r.capped, // 是否因超出班制上限被封顶
       restMinutes: r.restMinutes,
       units: r.units,
       crossDay: p.date !== n.ymd,
@@ -290,14 +273,21 @@ Page({
     store.clearPending();
     this.setData({ pending: null, selectedHour: 0, selectedUnits: '0.00' });
     this.refreshToday();
-    this.showResult('记录成功', [
-      { k: '班　　次', v: p.shift + '（' + shiftUtil.labelOf(p.shiftType) + '）' },
+
+    const label = shiftUtil.labelOf(shiftType);
+    const rows = [
+      { k: '班　　次', v: p.shift + '（' + label + '）' },
       { k: '上班时间', v: p.startTime },
       { k: '下班时间', v: n.hm + (rec.crossDay ? '（次日）' : '') },
       { k: '出勤时长', v: time.durationText(r.minutes) },
-      { k: '计酬工时', v: r.hours + ' 小时' },
+      { k: '计酬工时', v: r.hours + ' 小时' + (r.capped ? '（已封顶）' : '') },
       { k: '折合工时', v: r.units + ' 个' },
-    ]);
+    ];
+    const note = r.capped
+      ? label + '工时上限为 ' + r.cap + ' 小时，本次出勤 ' + time.durationText(r.minutes) + '，超出部分不计入工时。'
+      : '';
+
+    this.showResult('记录成功', rows, note);
   },
 
   /* ---------------- 按工时记录 ---------------- */
@@ -306,7 +296,7 @@ Page({
     const h = Number(e.currentTarget.dataset.hour);
     this.setData({
       selectedHour: h,
-      selectedUnits: (Math.round((h / 8) * 100) / 100).toFixed(2),
+      selectedUnits: time.round2(h / 8).toFixed(2),
     });
   },
 
@@ -317,7 +307,7 @@ Page({
       return;
     }
     const n = time.now();
-    const units = Math.round((h / 8) * 100) / 100;
+    const units = time.round2(h / 8);
     store.addRecord({
       date: n.ymd,
       endDate: n.ymd,
@@ -331,7 +321,6 @@ Page({
       restMinutes: 0,
       units: units,
       crossDay: false,
-      createdAt: n.ts,
     });
     this.setData({ selectedHour: 0, selectedUnits: '0.00' });
     this.refreshToday();
@@ -362,6 +351,8 @@ Page({
           ? r.startTime + ' - ' + r.endTime + (r.crossDay ? '（跨天）' : '')
           : '',
       hours: r.hours,
+      capped: !!r.capped,
+      cappedText: r.capped ? '出勤 ' + time.durationText(r.minutes) + '，已封顶' : '',
       units: Number(r.units).toFixed(2),
     }));
 
@@ -372,45 +363,27 @@ Page({
 
   onDeleteRecord(e) {
     const id = e.currentTarget.dataset.id;
-    this.setData({
-      dialog: {
-        visible: true,
-        title: '删除这条记录？',
-        content: '删除后无法恢复。',
-        confirmText: '删除',
-        cancelText: '再想想',
-        action: 'delete',
-        delId: id,
+    confirmDialog({
+      title: '删除这条记录？',
+      content: '删除后无法恢复。',
+      confirmText: '删除',
+      cancelText: '再想想',
+      onConfirm: () => {
+        store.removeRecord(id);
+        this.refreshToday();
+        toast(this, '已删除');
       },
     });
   },
 
-  /* ---------------- 弹窗 ---------------- */
+  /* ---------------- 保存（弹窗确认后回调） ---------------- */
 
-  onDialogConfirm() {
-    const d = this.data.dialog;
-    const close = { 'dialog.visible': false };
-
-    if (d.action === 'delete') {
-      store.removeRecord(d.delId);
-      this.refreshToday();
-      toast(this, '已删除');
-    } else if (d.action === 'cancelClock') {
-      store.clearPending();
-      this.setData({ pending: null });
-      toast(this, '已取消本次上班打卡');
-    } else if (d.action === 'saveZero' || d.action === 'saveLong') {
-      const p = store.getPending();
-      if (p) {
-        const n = time.now();
-        this.doSaveTimeRecord(p, n, time.calcWork(p.startTs, n.ts));
-      }
+  saveTimeRecordNow() {
+    const p = store.getPending();
+    if (p) {
+      const n = time.now();
+      this.doSaveTimeRecord(p, n, time.calcWork(p.startTs, n.ts));
     }
-    this.setData(close);
-  },
-
-  onDialogCancel() {
-    this.setData({ 'dialog.visible': false });
   },
 
   showResult(title, rows) {
@@ -419,5 +392,13 @@ Page({
 
   closeResult() {
     this.setData({ 'result.visible': false });
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '记工时 · 轻松记录每日出勤工时',
+      path: '/pages/record/record',
+      imageUrl: '/assets/share-cover.jpg',
+    };
   },
 });

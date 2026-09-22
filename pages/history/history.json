@@ -1,5 +1,4 @@
 {
   "navigationBarTitleText": "历史查询",
-  "enablePullDownRefresh": true,
-  "usingComponents": {}
+  "enablePullDownRefresh": true
 }

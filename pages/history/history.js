@@ -1,6 +1,7 @@
 const store = require('../../utils/store.js');
 const time = require('../../utils/time.js');
 const shiftUtil = require('../../utils/shift.js');
+const { toast } = require('../../utils/ui.js');
 
 const MAX_MONTHS = 24;
 
@@ -63,7 +64,7 @@ Page({
       hours: x.hours,
       days: x.days,
       shiftHours: x.shiftHours,
-      label: time.ymText(x.ym).replace('年', '年'),
+      label: time.ymText(x.ym),
       pct: max ? Math.max(6, Math.round((x.hours / max) * 100)) : 0,
     }));
   },
@@ -105,12 +106,14 @@ Page({
     });
 
     const days = rows.length;
+    const hasCapped = list.some((r) => r.capped);
     this.setData({
       ym: ym,
       ymText: time.ymText(ym),
       monthStat: monthStat,
       shiftStat: shiftStat,
       rows: rows,
+      hasCapped: hasCapped,
       totalHours: totalHours,
       totalUnits: time.round2(totalHours / 8).toFixed(2),
       workDays: days,
@@ -124,5 +127,43 @@ Page({
 
   onPickBar(e) {
     this.load(e.currentTarget.dataset.ym);
+  },
+
+  /* ---------------- 复制查询结果 ---------------- */
+
+  onCopyMonth() {
+    if (!this.data.rows.length) {
+      toast(this, '该月份还没有记录');
+      return;
+    }
+    const lines = [];
+    lines.push('记工时 · ' + this.data.ymText);
+    lines.push('日期\t班次\t出勤小时\t折合工时');
+    this.data.rows.forEach((r) => {
+      lines.push(r.md + '\t' + r.shiftText + '\t' + r.hours + '\t' + r.units);
+    });
+    lines.push('');
+    lines.push(
+      '合计\t' + this.data.workDays + '天\t' + this.data.totalHours + '\t' + this.data.totalUnits,
+    );
+    lines.push('（8 小时 = 1 工时，出勤时长不足 1 小时部分已舍去）');
+    if (this.data.hasCapped) {
+      lines.push('（打卡出勤超出班制上限的，已按上限计入工时：12 小时班制上限 12 小时，8 小时班制上限 8 小时）');
+    }
+
+    const text = lines.join('\n');
+    wx.setClipboardData({
+      data: text,
+      success: () => toast(this, '已复制到粘贴板'),
+      fail: () => toast(this, '复制失败，请重试'),
+    });
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '记工时 · 查询历史出勤工时',
+      path: '/pages/history/history',
+      imageUrl: '/assets/share-cover.jpg',
+    };
   },
 });

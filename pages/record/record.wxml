@@ -136,6 +136,7 @@
           <text class="rec-item__h">小时</text>
         </view>
         <view class="rec-item__units">{{item.units}} 工时</view>
+        <view class="rec-item__tag" wx:if="{{item.capped}}">已封顶</view>
       </view>
 
       <!-- 第三列：删除 -->
@@ -154,35 +155,40 @@
 <view class="mask" wx:if="{{showShiftPicker}}" bindtap="onSheetMask"></view>
 <view class="sheet {{showShiftPicker ? 'sheet--show' : ''}}">
   <view class="sheet__bar"></view>
-  <view class="sheet__title">① 选择班制</view>
-  <view class="type-row">
-    <view
-      wx:for="{{shiftTypes}}"
-      wx:key="key"
-      class="type-card {{pickerType === item.key ? 'is-active' : ''}}"
-      data-type="{{item.key}}"
-      bindtap="onPickType"
-    >
-      <view class="type-card__name">{{item.label}}</view>
-      <view class="type-card__sub">{{item.desc}}</view>
-    </view>
-  </view>
 
-  <view class="sheet__title">② 选择班次</view>
-  <view class="shift-row">
-    <view
-      wx:for="{{pickerShifts}}"
-      wx:key="name"
-      class="shift-chip {{pickerShift === item.name ? 'is-active shift-chip--' + item.theme : ''}}"
-      data-shift="{{item.name}}"
-      bindtap="onPickShift"
-    >
-      {{item.name}}
+  <scroll-view scroll-y class="sheet__body">
+    <view class="sheet__title">① 选择班制</view>
+    <view class="type-row">
+      <view
+        wx:for="{{shiftTypes}}"
+        wx:key="key"
+        class="type-card {{pickerType === item.key ? 'is-active' : ''}}"
+        data-type="{{item.key}}"
+        bindtap="onPickType"
+      >
+        <view class="type-card__name">{{item.label}}</view>
+        <view class="type-card__sub">{{item.desc}}</view>
+      </view>
     </view>
-  </view>
 
-  <view class="big-btn big-btn--primary" bindtap="onConfirmShift">确 定</view>
-  <view class="sheet__close" wx:if="{{!isFirstSet}}" bindtap="closeShiftPicker">取消</view>
+    <view class="sheet__title">② 选择班次</view>
+    <view class="shift-row">
+      <view
+        wx:for="{{pickerShifts}}"
+        wx:key="name"
+        class="shift-chip {{pickerShift === item.name ? 'is-active shift-chip--' + item.theme : ''}}"
+        data-shift="{{item.name}}"
+        bindtap="onPickShift"
+      >
+        {{item.name}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="sheet__footer">
+    <view class="big-btn big-btn--gray" wx:if="{{!isFirstSet}}" bindtap="closeShiftPicker">取 消</view>
+    <view class="big-btn big-btn--primary" bindtap="onConfirmShift">确 定</view>
+  </view>
 </view>
 
 <!-- ========== 记录结果弹层 ========== -->
@@ -196,20 +202,6 @@
       <text class="result__v num">{{item.v}}</text>
     </view>
   </view>
+  <view class="result__note" wx:if="{{result.note}}">{{result.note}}</view>
   <view class="big-btn big-btn--primary" bindtap="closeResult">知 道 了</view>
 </view>
-
-<!-- TDesign 轻提示 -->
-<t-toast id="t-toast" />
-
-<!-- TDesign 结果 / 确认弹窗 -->
-<t-dialog
-  visible="{{dialog.visible}}"
-  title="{{dialog.title}}"
-  content="{{dialog.content}}"
-  confirm-btn="{{dialog.confirmText}}"
-  cancel-btn="{{dialog.cancelText}}"
-  bind:confirm="onDialogConfirm"
-  bind:cancel="onDialogCancel"
-  t-class-content="dialog-content--big"
-/>

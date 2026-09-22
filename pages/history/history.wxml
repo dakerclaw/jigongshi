@@ -70,5 +70,13 @@
     </view>
   </view>
 
+  <!-- 复制查询结果 -->
+  <view
+    class="big-btn big-btn--ghost copy-btn {{rows.length ? '' : 'big-btn--disabled'}}"
+    bindtap="onCopyMonth"
+  >
+    复制查询结果
+  </view>
+
   <view class="foot-space"></view>
 </view>

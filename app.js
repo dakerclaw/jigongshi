@@ -19,8 +19,6 @@ App({
     }
   },
 
-  onShow() {},
-
   // 保存默认班制（供首页调用）
   saveDefaultShift(shiftType, shift) {
     this.globalData.shiftType = shiftType;

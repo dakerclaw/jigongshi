@@ -39,14 +39,15 @@
 
     <view class="table">
       <view class="table__head">
-        <view class="table__th table__c1">日期</view>
+        <view class="table__th table__c1">日期<i class="table__sort">↓</i></view>
         <view class="table__th table__c2">班次</view>
         <view class="table__th table__c3">工时数</view>
       </view>
 
       <view wx:if="{{rows.length === 0}}" class="empty">
         <view class="empty__icon">📭</view>
-        <view>本月还没有记录，点上方「记工时」开始</view>
+        <view>该月还没有出勤记录，</view>
+        <view>未到的日期不会显示</view>
       </view>
 
       <view
@@ -62,6 +63,7 @@
           <view class="table__week">{{item.week}}</view>
         </view>
         <view class="table__td table__c2">
+          <text wx:if="{{!item.shiftList.length}}" class="table__none">无</text>
           <view
             class="badge badge--sm badge--{{s.theme}}"
             wx:for="{{item.shiftList}}"
@@ -81,14 +83,7 @@
       </view>
     </view>
 
-    <view class="table__tip">点上面任意一天，可查看明细或补记工时</view>
-
-    <view
-      class="big-btn big-btn--ghost mt-24 {{rows.length ? '' : 'big-btn--disabled'}}"
-      bindtap="onCopyMonth"
-    >
-      复制本月工时表
-    </view>
+    <view class="table__tip">点上面任意一天，可查看明细、修改或补记工时</view>
   </view>
 
   <view class="foot-space"></view>
@@ -98,7 +93,7 @@
 <view class="mask" wx:if="{{daySheet.visible}}" bindtap="closeDaySheet"></view>
 <view class="sheet sheet--tall {{daySheet.visible ? 'sheet--show' : ''}}">
   <view class="sheet__bar"></view>
-  <scroll-view scroll-y class="sheet__scroll">
+  <scroll-view scroll-y class="sheet__body">
     <view class="sheet__title">{{daySheet.title}}</view>
 
     <block wx:if="{{daySheet.records.length}}">
@@ -106,6 +101,7 @@
         <view class="day-rec__l">
           <text class="badge badge--sm badge--{{item.theme}}">{{item.shift}}</text>
           <text class="day-rec__time">{{item.timeText}}</text>
+          <text class="day-rec__cap" wx:if="{{item.capped}}">{{item.cappedText}}</text>
         </view>
         <view class="day-rec__r">
           <text class="num day-rec__h">{{item.hours}}</text>
@@ -123,14 +119,14 @@
       <view>这天还没有记录</view>
     </view>
 
-    <view class="sheet__title">补记这一天的工时</view>
+    <view class="sheet__title">{{editMode === 'edit' ? '修改这一天的工时' : '补记这一天的工时'}}</view>
     <view class="shift-row">
       <view
-        wx:for="{{addShifts}}"
+        wx:for="{{editShifts}}"
         wx:key="name"
-        class="shift-chip {{addShift === item.name ? 'is-active' : ''}}"
+        class="shift-chip {{editShift === item.name ? 'is-active' : ''}}"
         data-shift="{{item.name}}"
-        bindtap="onPickAddShift"
+        bindtap="onPickEditShift"
       >
         {{item.name}}
       </view>
@@ -140,45 +136,23 @@
       <view
         wx:for="{{hourOptions}}"
         wx:key="*this"
-        class="hour-cell {{addHour === item ? 'is-active' : ''}}"
+        class="hour-cell {{editHour === item ? 'is-active' : ''}}"
         data-hour="{{item}}"
-        bindtap="onPickAddHour"
+        bindtap="onPickEditHour"
       >
         {{item}} 小时
       </view>
     </view>
 
-    <view class="calc-box" wx:if="{{addHour}}">
-      <view class="calc-box__line">
-        <text class="calc-box__k">补记时长</text>
-        <text class="calc-box__v num">{{addHour}} 小时</text>
-      </view>
-      <view class="calc-box__line">
-        <text class="calc-box__k">折合工时</text>
-        <text class="calc-box__v calc-box__v--big num">{{addUnits}}</text>
-        <text class="calc-box__unit">个</text>
-      </view>
-    </view>
-
-    <view
-      class="big-btn {{addHour ? 'big-btn--primary' : 'big-btn--disabled'}}"
-      bindtap="onSaveAdd"
-    >
-      保 存 补 记
-    </view>
-    <view class="sheet__close" bindtap="closeDaySheet">关闭</view>
   </scroll-view>
-</view>
 
-<!-- TDesign 轻提示 / 确认弹窗 -->
-<t-toast id="t-toast" />
-<t-dialog
-  visible="{{dialog.visible}}"
-  title="{{dialog.title}}"
-  content="{{dialog.content}}"
-  confirm-btn="{{dialog.confirmText}}"
-  cancel-btn="{{dialog.cancelText}}"
-  bind:confirm="onDialogConfirm"
-  bind:cancel="onDialogCancel"
-  t-class-content="dialog-content--big"
-/>
+  <view class="sheet__footer">
+    <view class="big-btn big-btn--gray" bindtap="closeDaySheet">关 闭</view>
+    <view
+      class="big-btn {{editHour ? 'big-btn--primary' : 'big-btn--disabled'}}"
+      bindtap="onSaveEdit"
+    >
+      {{editMode === 'edit' ? '保 存 修 改' : '保 存 补 记'}}
+    </view>
+  </view>
+</view>
