@@ -10,6 +10,38 @@
       {
         "value": "node_modules/**/*",
         "type": "file"
+      },
+      {
+        "value": ".git/**/*",
+        "type": "file"
+      },
+      {
+        "value": ".gitignore",
+        "type": "file"
+      },
+      {
+        "value": ".workbuddy/**/*",
+        "type": "file"
+      },
+      {
+        "value": "project.private.config.json",
+        "type": "file"
+      },
+      {
+        "value": "package-lock.json",
+        "type": "file"
+      },
+      {
+        "value": "PRIVACY.md",
+        "type": "file"
+      },
+      {
+        "value": "**/.DS_Store",
+        "type": "file"
+      },
+      {
+        "value": "**/Thumbs.db",
+        "type": "file"
       }
     ],
     "include": []
