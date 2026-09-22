@@ -382,12 +382,16 @@ Page({
     const p = store.getPending();
     if (p) {
       const n = time.now();
-      this.doSaveTimeRecord(p, n, time.calcWork(p.startTs, n.ts));
+      // 与 onClockOut 保持一致：按「上班打卡时所属班制」取计酬上限
+      const cap = shiftUtil.maxHoursOf(p.shiftType || this.data.shiftType);
+      this.doSaveTimeRecord(p, n, time.calcWork(p.startTs, n.ts, cap));
     }
   },
 
-  showResult(title, rows) {
-    this.setData({ result: { visible: true, title: title, rows: rows } });
+  showResult(title, rows, note) {
+    this.setData({
+      result: { visible: true, title: title, rows: rows, note: note || '' },
+    });
   },
 
   closeResult() {
