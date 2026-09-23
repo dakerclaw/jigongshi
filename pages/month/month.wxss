@@ -172,10 +172,6 @@
   color: #a3a8b0;
 }
 
-.mt-24 {
-  margin-top: 16rpx;
-}
-
 /* 行点击反馈 */
 .table__row--hover {
   background: #e7f0ff;

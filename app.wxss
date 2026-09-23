@@ -320,13 +320,6 @@ picker {
   color: #fff;
 }
 
-.sheet__close {
-  text-align: center;
-  font-size: 34rpx;
-  color: #8a94a6;
-  padding: 28rpx 0 0;
-}
-
 /* 折算结果（首页/补记复用） */
 /* ---------------- 折算结果 ---------------- */
 .calc-box {
