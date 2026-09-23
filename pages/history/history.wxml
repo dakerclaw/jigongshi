@@ -50,8 +50,8 @@
         <view class="stat-row__fill stat-row__fill--{{item.theme}}" style="width:{{item.pct}}%"></view>
       </view>
       <view class="stat-row__v">
-        <text class="num">{{item.hours}}</text>
-        <text class="stat-row__u">h</text>
+        <text class="num">{{item.units}}</text>
+        <text class="stat-row__u">个</text>
       </view>
     </view>
   </view>
@@ -73,7 +73,7 @@
           style="width:{{item.pct}}%"
         ></view>
       </view>
-      <view class="bar-item__v"><text class="num">{{item.hours}}</text> 小时</view>
+      <view class="bar-item__v"><text class="num">{{item.units}}</text> 个</view>
     </view>
   </view>
 

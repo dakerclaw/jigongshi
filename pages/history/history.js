@@ -61,18 +61,21 @@ Page({
       .map((ym) => ({
         ym: ym,
         hours: map[ym].hours,
+        units: time.round2(map[ym].hours / 8),
         days: Object.keys(map[ym].days).length,
         shiftHours: map[ym].shiftHours,
       }));
 
-    const max = list.reduce((m, x) => (x.hours > m ? x.hours : m), 0);
+    // 柱状条按「工时个数」比例（8 小时 = 1 个工时）
+    const max = list.reduce((m, x) => (x.units > m ? x.units : m), 0);
     return list.map((x) => ({
       ym: x.ym,
       hours: x.hours,
+      units: x.units.toFixed(2),
       days: x.days,
       shiftHours: x.shiftHours,
       label: time.ymText(x.ym),
-      pct: max ? Math.max(6, Math.round((x.hours / max) * 100)) : 0,
+      pct: max ? Math.max(6, Math.round((x.units / max) * 100)) : 0,
     }));
   },
 
@@ -102,14 +105,19 @@ Page({
         theme: shiftUtil.themeOf(dayMap[d].shifts[0]),
       }));
 
-    // 班次分布
+    // 班次分布（展示折合工时个数，8 小时 = 1 个工时）
     const shiftHours = cur ? cur.shiftHours : {};
     const shiftStat = Object.keys(shiftHours)
-      .map((name) => ({ name: name, theme: shiftUtil.themeOf(name), hours: shiftHours[name] }))
-      .sort((a, b) => b.hours - a.hours);
-    const sMax = shiftStat.reduce((m, x) => (x.hours > m ? x.hours : m), 0);
+      .map((name) => ({
+        name: name,
+        theme: shiftUtil.themeOf(name),
+        units: time.round2(shiftHours[name] / 8),
+      }))
+      .sort((a, b) => b.units - a.units);
+    const sMax = shiftStat.reduce((m, x) => (x.units > m ? x.units : m), 0);
     shiftStat.forEach((x) => {
-      x.pct = sMax ? Math.max(8, Math.round((x.hours / sMax) * 100)) : 0;
+      x.pct = sMax ? Math.max(8, Math.round((x.units / sMax) * 100)) : 0;
+      x.units = x.units.toFixed(2);
     });
 
     const days = rows.length;
