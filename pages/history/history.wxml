@@ -39,7 +39,7 @@
         <view class="sum-card__label">日均（小时）</view>
       </view>
     </view>
-    <view class="sum-note" wx:if="{{unitsNote}}">逐日折合工时四舍五入，月合计按总工时计算</view>
+    <view class="sum-note">折合工时按每日工时 ÷ 8 保留两位小数后逐日相加</view>
   </view>
 
   <!-- 班次分布 -->

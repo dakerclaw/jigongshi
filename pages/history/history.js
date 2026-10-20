@@ -23,7 +23,6 @@ Page({
     totalUnits: '0.00',
     workDays: 0,
     avgHours: '0.0',
-    unitsNote: false,
     hasCapped: false,
 
     shiftStat: [],
@@ -90,7 +89,6 @@ Page({
       totalUnits: sum.totalUnits.toFixed(2),
       workDays: sum.workDays,
       avgHours: sum.avgHours,
-      unitsNote: stats.hasRoundingGap(dayMap, sum.totalUnits),
     });
   },
 
@@ -132,12 +130,9 @@ Page({
         '\t' +
         this.data.totalUnits,
     );
-    lines.push('（8 小时 = 1 工时，出勤时长不足 1 小时部分已舍去）');
+    lines.push('（8 小时 = 1 工时，出勤时长不足 1 小时部分已舍去；折合工时按每日工时 ÷ 8 保留两位小数后逐日相加）');
     if (this.data.hasCapped) {
       lines.push('（打卡出勤超出班制上限的，已按上限计入计酬小时：12 小时班制上限 12 小时，8 小时班制上限 8 小时）');
-    }
-    if (this.data.unitsNote) {
-      lines.push('（逐日折合工时四舍五入，合计按总工时计算，可能有 0.01 差异）');
     }
 
     wx.setClipboardData({

@@ -45,7 +45,6 @@ Page({
     totalUnits: '0.00',
     workDays: 0,
     avgHours: '0.0',
-    unitsNote: false,
 
     // 当天明细 / 补记 / 单条编辑
     daySheet: { visible: false, date: '', title: '', records: [], totalHours: 0, totalUnits: '0.00' },
@@ -141,7 +140,6 @@ Page({
       totalUnits: sum.totalUnits.toFixed(2),
       workDays: sum.workDays,
       avgHours: sum.avgHours,
-      unitsNote: stats.hasRoundingGap(dayMap, sum.totalUnits),
     });
   },
 

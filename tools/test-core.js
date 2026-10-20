@@ -72,7 +72,7 @@ const shiftUtil = require(path.join(ROOT, 'utils/shift.js'));
 const stats = require(path.join(ROOT, 'utils/stats.js'));
 
 const app = {
-  globalData: { version: '1.1.0', shiftType: '12h', shift: '白班' },
+  globalData: { version: '1.1.1', shiftType: '12h', shift: '白班' },
   saveDefaultShift(type, shift) {
     this.globalData.shiftType = type;
     this.globalData.shift = shift;
@@ -271,7 +271,7 @@ test('备份导出 / 导入 / 清空', () => {
 
 /* ---------------- 统计口径 ---------------- */
 
-test('统计：出勤天数按有记录的自然日，逐日折合工时可能和合计差 0.01', () => {
+test('统计：月合计按每日折算后保留两位小数再相加', () => {
   const list = [
     { date: '2026-10-01', hours: 1, minutes: 60, shift: '白班' },
     { date: '2026-10-02', hours: 1, minutes: 60, shift: '白班' },
@@ -279,9 +279,14 @@ test('统计：出勤天数按有记录的自然日，逐日折合工时可能�
   const sum = stats.summarize(list);
   assert.strictEqual(sum.totalHours, 2);
   assert.strictEqual(sum.workDays, 2);
-  assert.strictEqual(sum.totalUnits, 0.25);
-  const map = stats.buildDayMap(list);
-  assert.strictEqual(stats.hasRoundingGap(map, sum.totalUnits), true);
+  // 1h/8=0.125 -> 0.13；0.13+0.13=0.26，而不是 2h/8=0.25
+  assert.strictEqual(sum.totalUnits, 0.26);
+
+  // 历史页月度条形图与班次分布也必须使用同一口径
+  const ms = stats.monthStats(list, 24);
+  assert.strictEqual(ms[0].units, '0.26');
+  const ss = stats.shiftStats(list);
+  assert.strictEqual(ss[0].units, '0.26');
 });
 
 test('班次分布：0 工时不再画出最小柱', () => {
@@ -556,7 +561,7 @@ test('关于页：导出、清空、版本号', () => {
   const page = makePage('pages/about/about.js');
   page.onLoad();
   page.onShow();
-  assert.strictEqual(page.data.version, '1.1.0');
+  assert.strictEqual(page.data.version, '1.1.1');
   assert.strictEqual(page.data.recordCount, 1);
 
   clipboard = '';

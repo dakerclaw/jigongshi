@@ -34,23 +34,32 @@ function buildDayMap(records) {
   return map;
 }
 
+/** 逐日折合工时：每日工时 ÷ 8，各自保留 2 位小数后再相加 */
+function sumDayUnits(dayHours) {
+  const sum = Object.keys(dayHours).reduce((acc, d) => acc + time.hoursToUnits(dayHours[d]), 0);
+  return Math.round(sum * 100) / 100;
+}
+
 /** 月度汇总（出勤天数按「有记录的自然日」计，含折算为 0 工时的短时出勤） */
 function summarize(records) {
   const map = buildDayMap(records);
   let totalHours = 0;
   let totalMinutes = 0;
+  const dayHours = {};
   const days = Object.keys(map);
 
   days.forEach((d) => {
     totalHours += map[d].hours;
     totalMinutes += map[d].minutes;
+    dayHours[d] = map[d].hours;
   });
 
   const workDays = days.length;
   return {
     totalHours: totalHours,
     totalMinutes: totalMinutes,
-    totalUnits: time.hoursToUnits(totalHours),
+    // 月合计以「逐日折合后保留两位小数再求和」为准，不用总工时一次性折算
+    totalUnits: sumDayUnits(dayHours),
     workDays: workDays,
     avgHours: workDays ? (Math.round((totalHours / workDays) * 10) / 10).toFixed(1) : '0.0',
   };
@@ -62,15 +71,16 @@ function shiftStats(records) {
   (records || []).forEach((r) => {
     if (!r) return;
     const name = r.shift || '未标注班次';
-    if (!map[name]) map[name] = { name: name, theme: shiftUtil.themeOf(name), hours: 0 };
-    map[name].hours += Number(r.hours) || 0;
+    if (!map[name]) map[name] = { name: name, theme: shiftUtil.themeOf(name), dayHours: {} };
+    const date = String(r.date || '');
+    map[name].dayHours[date] = (map[name].dayHours[date] || 0) + (Number(r.hours) || 0);
   });
 
   const list = Object.keys(map)
     .map((name) => ({
       name: name,
       theme: map[name].theme,
-      units: time.hoursToUnits(map[name].hours),
+      units: sumDayUnits(map[name].dayHours),
     }))
     .sort((a, b) => b.units - a.units);
 
@@ -92,10 +102,11 @@ function monthStats(records, maxMonths) {
     if (!r || !r.date) return;
     const ym = String(r.date).slice(0, 7);
     if (!ym) return;
-    if (!map[ym]) map[ym] = { ym: ym, hours: 0, days: {}, shiftHours: {} };
+    if (!map[ym]) map[ym] = { ym: ym, hours: 0, days: {}, dayHours: {}, shiftHours: {} };
     const hours = Number(r.hours) || 0;
     map[ym].hours += hours;
     map[ym].days[r.date] = 1;
+    map[ym].dayHours[r.date] = (map[ym].dayHours[r.date] || 0) + hours;
     const shift = r.shift || '未标注班次';
     map[ym].shiftHours[shift] = (map[ym].shiftHours[shift] || 0) + hours;
   });
@@ -106,7 +117,7 @@ function monthStats(records, maxMonths) {
     .map((ym) => ({
       ym: ym,
       hours: map[ym].hours,
-      units: time.hoursToUnits(map[ym].hours),
+      units: sumDayUnits(map[ym].dayHours),
       days: Object.keys(map[ym].days).length,
       shiftHours: map[ym].shiftHours,
     }));
@@ -123,19 +134,9 @@ function monthStats(records, maxMonths) {
   }));
 }
 
-/** 每日折合工时之和与「总工时折算」的差异提示（四舍五入导致） */
-function hasRoundingGap(dayMap, totalUnits) {
-  let sum = 0;
-  Object.keys(dayMap).forEach((d) => {
-    sum += time.hoursToUnits(dayMap[d].hours);
-  });
-  return Math.abs(sum - (Number(totalUnits) || 0)) > 0.004;
-}
-
 module.exports = {
   buildDayMap,
   summarize,
   shiftStats,
   monthStats,
-  hasRoundingGap,
 };

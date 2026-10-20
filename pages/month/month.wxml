@@ -91,9 +91,6 @@
     </view>
 
     <view class="table__tip">点上面任意一天，可查看明细、编辑单条记录或补记工时</view>
-    <view class="table__tip" wx:if="{{unitsNote}}">
-      逐日折合工时四舍五入，月合计按总工时计算，可能有 0.01 差异
-    </view>
   </view>
 
   <view class="foot-space"></view>

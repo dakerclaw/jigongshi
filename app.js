@@ -10,7 +10,7 @@ const shiftUtil = require('./utils/shift.js');
 
 App({
   globalData: {
-    version: '1.1.0',
+    version: '1.1.1',
     // 默认班制：'12h' | '8h'
     shiftType: shiftUtil.DEFAULT_TYPE,
     // 默认班次：白班 / 中班 / 夜班
