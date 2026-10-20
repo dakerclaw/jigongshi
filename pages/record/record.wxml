@@ -53,11 +53,11 @@
     </block>
 
     <!-- 已上班，等待下班 -->
-    <block wx:else>
+    <block wx:if="{{pending}}">
       <view class="pending-box">
         <view class="pending-row">
           <text class="pending-row__k">上班时间</text>
-          <text class="pending-row__v num">{{pending.startTime}}</text>
+          <text class="pending-row__v num">{{pending.startTime || '--:--'}}</text>
         </view>
         <view class="pending-row">
           <text class="pending-row__k">已经上班</text>
@@ -65,8 +65,11 @@
         </view>
         <view class="pending-row">
           <text class="pending-row__k">班　　次</text>
-          <text class="pending-row__v">{{pending.shift}}</text>
+          <text class="pending-row__v">{{pending.shift || '未标注班次'}}（{{pendingShiftTypeLabel}}）</text>
         </view>
+      </view>
+      <view class="pending-alert" wx:if="{{pendingAlert}}">
+        已上班超过 16 小时，若忘记下班请及时处理
       </view>
       <view class="big-btn big-btn--primary" bindtap="onClockOut">下 班 打 卡</view>
       <view class="big-btn big-btn--gray mt-24" bindtap="onCancelClock">取消本次上班</view>
@@ -74,7 +77,7 @@
   </view>
 
   <!-- ========== 按工时记录 ========== -->
-  <view class="card" wx:else>
+  <view class="card" wx:if="{{mode !== 'time'}}">
     <view class="section-title">选择今天上了几小时</view>
     <view class="hour-grid">
       <view
@@ -114,8 +117,14 @@
     <view class="list-head">
       <view class="section-title list-head__title">今日记录</view>
       <view class="list-head__sum">
+        <text class="list-head__cross" wx:if="{{todayHasCross}}">含跨天</text>
         共 <text class="num list-head__num">{{todayHours}}</text> 小时
       </view>
+    </view>
+
+    <view class="undo-bar" wx:if="{{undoRecord}}">
+      <text class="undo-bar__text">已删除 1 条记录</text>
+      <text class="undo-bar__btn" bindtap="onUndoDelete">撤销</text>
     </view>
 
     <view wx:if="{{todayRecords.length === 0}}" class="empty">
@@ -127,12 +136,12 @@
       class="rec-item"
       wx:for="{{todayRecords}}"
       wx:key="id"
-      wx:for-index="idx"
     >
       <!-- 第一列：班次 + 记录类型 / 起止时间 -->
       <view class="rec-item__col rec-item__col--shift">
         <view class="badge badge--{{item.theme}}">{{item.shift}}</view>
         <view class="rec-item__type">{{item.typeLabel}}</view>
+        <view class="rec-item__date" wx:if="{{item.dateLabel}}">{{item.dateLabel}}</view>
         <view class="rec-item__time" wx:if="{{item.timeText}}">{{item.timeText}}</view>
       </view>
 
@@ -148,13 +157,14 @@
 
       <!-- 第三列：删除 -->
       <view class="rec-item__col rec-item__col--del">
-        <view class="rec-item__del" data-id="{{item.id}}" data-idx="{{idx}}" bindtap="onDeleteRecord">
+        <view class="rec-item__del" data-id="{{item.id}}" bindtap="onDeleteRecord">
           删除
         </view>
       </view>
     </view>
   </view>
 
+  <view class="about-link" bindtap="onOpenAbout">关于 · 数据管理 · 隐私</view>
   <view class="foot-space"></view>
 </view>
 
@@ -183,7 +193,7 @@
       <view
         wx:for="{{pickerShifts}}"
         wx:key="name"
-        class="shift-chip {{pickerShift === item.name ? 'is-active shift-chip--' + item.theme : ''}}"
+        class="shift-chip {{pickerShift === item.name ? 'is-active' : ''}}"
         data-shift="{{item.name}}"
         bindtap="onPickShift"
       >

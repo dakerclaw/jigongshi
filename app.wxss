@@ -14,7 +14,7 @@ page {
   --c-card: #ffffff;
   --c-text: #1a1a1a;
   --c-text-2: #4e5969;
-  --c-text-3: #8a94a6;
+  --c-text-3: #667085;
   --c-border: #e3e6eb;
   --c-line: #f0f2f5;
 
@@ -98,7 +98,7 @@ picker {
   color: var(--c-primary);
 }
 .big-btn--ghost:active {
-  background: var(--c-primary-light);
+  background: #cfe0ff;
 }
 .big-btn--gray {
   background: #eef0f3;
@@ -106,7 +106,7 @@ picker {
 }
 .big-btn--disabled {
   background: #dcdfe4;
-  color: #a3a8b0;
+  color: #7a8494;
 }
 
 /* 数字强调 */
@@ -242,7 +242,6 @@ picker {
 .sheet__footer {
   flex: 0 0 auto;
   display: flex;
-  gap: 24rpx;
   padding: 12rpx 0 calc(162rpx + env(safe-area-inset-bottom));
   background: #fff;
 }
@@ -251,6 +250,9 @@ picker {
   margin: 0;
   height: 96rpx;
   line-height: 96rpx;
+}
+.sheet__footer .big-btn + .big-btn {
+  margin-left: 24rpx;
 }
 .sheet__bar {
   width: 88rpx;
@@ -288,7 +290,7 @@ picker {
 }
 .type-card__sub {
   font-size: 30rpx;
-  color: #8a94a6;
+  color: #667085;
   margin-top: 2rpx;
 }
 
@@ -353,6 +355,6 @@ picker {
 }
 .calc-box__note {
   font-size: 30rpx;
-  color: #8a94a6;
+  color: #667085;
   margin-top: 0;
 }

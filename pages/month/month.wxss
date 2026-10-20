@@ -6,7 +6,7 @@
  * ------------------------------------------------------------------ */
 
 .page {
-  padding-bottom: 220rpx;
+  padding-bottom: calc(220rpx + env(safe-area-inset-bottom));
   min-height: 100vh;
 }
 
@@ -29,6 +29,10 @@
 }
 .month-nav__btn:active {
   background: #cfe0ff;
+}
+.month-nav__btn.is-disabled {
+  color: #667085;
+  background: #eef0f3;
 }
 .month-nav__ym {
   font-size: 34rpx;
@@ -102,9 +106,8 @@
   text-align: center;
 }
 .table__sort {
-  font-style: normal;
   font-size: 28rpx;
-  color: #8a94a6;
+  color: #667085;
   margin-left: 6rpx;
 }
 .table__c1 {
@@ -133,10 +136,6 @@
   padding: 14rpx 0;
   text-align: center;
 }
-.table__c3 {
-  text-align: center;
-  padding-right: 0;
-}
 .table__md {
   font-size: 38rpx;
   font-weight: 700;
@@ -145,7 +144,7 @@
 }
 .table__week {
   font-size: 28rpx;
-  color: #8a94a6;
+  color: #667085;
   text-align: center;
   margin-top: 2rpx;
 }
@@ -163,13 +162,13 @@
 }
 .table__units {
   font-size: 28rpx;
-  color: #8a94a6;
+  color: #667085;
   margin-top: 2rpx;
 }
 
 /* 无出勤日期的班次占位 */
 .table__none {
-  color: #a3a8b0;
+  color: #7a8494;
 }
 
 /* 行点击反馈 */
@@ -180,7 +179,7 @@
   margin-top: 16rpx;
   text-align: center;
   font-size: 30rpx;
-  color: #8a94a6;
+  color: #667085;
 }
 
 /* 补记弹层：内容更高（滚动由全局 .sheet__body 承担，底栏固定） */
@@ -191,20 +190,21 @@
 /* 当天记录 */
 .day-rec {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 6rpx 0;
+  padding: 12rpx 0;
   border-bottom: 2rpx solid #f0f2f5;
 }
 .day-rec__l {
   flex: 1;
   min-width: 0;
+  padding-right: 16rpx;
 }
 .day-rec__time {
   display: block;
   font-size: 30rpx;
-  color: #8a94a6;
-  margin-top: 0;
+  color: #667085;
+  margin-top: 2rpx;
 }
 .day-rec__cap {
   display: block;
@@ -214,6 +214,9 @@
 }
 .day-rec__r {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   text-align: right;
 }
 .day-rec__h {
@@ -225,17 +228,34 @@
   color: #4e5969;
   margin-left: 6rpx;
 }
+.day-rec__units {
+  font-size: 26rpx;
+  color: #667085;
+  white-space: nowrap;
+}
+.day-rec__ops {
+  display: flex;
+  align-items: center;
+  margin-top: 4rpx;
+}
+.day-rec__edit,
 .day-rec__del {
   display: inline-block;
-  margin-left: 20rpx;
-  padding: 10rpx 20rpx;
-  font-size: 32rpx;
-  color: #e34d59;
-  background: #fdeff0;
+  padding: 8rpx 16rpx;
+  font-size: 30rpx;
   border-radius: 10rpx;
 }
+.day-rec__edit {
+  color: #0052d9;
+  background: #e7f0ff;
+  margin-right: 12rpx;
+}
+.day-rec__del {
+  color: #e34d59;
+  background: #fdeff0;
+}
 .day-sum {
-  margin-top: 4rpx;
+  margin-top: 12rpx;
   padding: 8rpx 20rpx;
   background: #e7f0ff;
   border-radius: 14rpx;
@@ -247,6 +267,62 @@
   font-size: 44rpx;
   font-weight: 700;
   color: #0052d9;
+}
+
+/* 编辑单条 / 补记卡片 */
+.rec-edit {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: #f7f9fc;
+  border: 2rpx solid #e3e6eb;
+  border-radius: 16rpx;
+}
+.rec-edit__title {
+  margin-bottom: 12rpx;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.rec-edit > .big-btn {
+  margin-top: 16rpx;
+}
+.rec-edit__ops {
+  display: flex;
+  margin-top: 12rpx;
+}
+.rec-edit__ops .big-btn {
+  flex: 1;
+  height: 96rpx;
+  line-height: 96rpx;
+  font-size: 34rpx;
+}
+.rec-edit__ops .big-btn + .big-btn {
+  margin-left: 20rpx;
+}
+.time-row {
+  display: flex;
+  align-items: center;
+  margin: 8rpx 0 12rpx;
+}
+.time-row picker {
+  flex: 1;
+}
+.time-box {
+  height: 96rpx;
+  line-height: 96rpx;
+  text-align: center;
+  font-size: 42rpx;
+  font-weight: 700;
+  color: #0052d9;
+  background: #fff;
+  border: 3rpx solid #b9cdf5;
+  border-radius: 14rpx;
+}
+.time-sep {
+  flex-shrink: 0;
+  margin: 0 16rpx;
+  font-size: 32rpx;
+  color: #4e5969;
 }
 
 .empty--in-sheet {

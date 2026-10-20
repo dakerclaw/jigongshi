@@ -1,0 +1,62 @@
+<!-- ------------------------------------------------------------------
+  出勤轻松记 · 微信小程序
+  版权所有 © 2026 dakerclaw，保留所有权利。
+  本文件属专有软件，未经授权不得复制、修改、分发或用于商业用途。
+  详见项目根目录 LICENSE 文件。
+  ------------------------------------------------------------------ -->
+
+<view class="page">
+  <view class="card about-hero">
+    <view class="about-hero__icon">⏱️</view>
+    <view class="about-hero__name">出勤轻松记</view>
+    <view class="about-hero__ver">版本 {{version}} · 纯本地运行</view>
+    <view class="about-hero__desc">记录上下班与工时，自动折算工时个数</view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">数据管理</view>
+    <view class="about-stats">
+      <view class="about-stat">
+        <view class="about-stat__v num">{{recordCount}}</view>
+        <view class="about-stat__k">记录条数</view>
+      </view>
+      <view class="about-stat">
+        <view class="about-stat__v num">{{monthCount}}</view>
+        <view class="about-stat__k">有记录月份</view>
+      </view>
+      <view class="about-stat">
+        <view class="about-stat__v about-stat__v--text">{{pendingText}}</view>
+        <view class="about-stat__k">未完成打卡</view>
+      </view>
+    </view>
+    <view class="about-last">最近记录：{{lastText}}</view>
+
+    <view class="about-tip">
+      导出会把全部记录、默认班制和未完成打卡生成 JSON 并复制到剪贴板。请粘贴到备忘录、微信收藏或电脑上保存。
+    </view>
+
+    <view class="big-btn big-btn--ghost about-btn" bindtap="onExport">导出备份到剪贴板</view>
+    <view class="big-btn big-btn--gray about-btn" bindtap="onImport">从剪贴板导入备份</view>
+    <view class="about-warn">导入会覆盖本机现有数据，请确认剪贴板中是本应用的备份。</view>
+    <view class="big-btn about-btn about-btn--danger" bindtap="onClearRecords">清空全部工时记录</view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">隐私说明</view>
+    <view class="privacy-item">· 所有记录只保存在你的微信本地存储中，不上传服务器。</view>
+    <view class="privacy-item">· 不收集姓名、手机号、位置、通讯录等个人信息。</view>
+    <view class="privacy-item">· 不接入广告、统计或第三方 SDK，不发起网络请求。</view>
+    <view class="privacy-item">· 导出/导入由你主动触发，数据通过微信剪贴板在本机流转。</view>
+    <view class="privacy-item">· 卸载小程序或清理微信存储会删除本地数据，建议定期导出备份。</view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">关于</view>
+    <view class="about-line">出勤轻松记 · 微信小程序</view>
+    <view class="about-line">版权所有 © 2026 dakerclaw，保留所有权利。</view>
+    <view class="about-line">本软件为专有软件，未经授权不得复制、修改、分发或用于商业用途。</view>
+    <view class="about-line about-line--muted">工时规则：8 小时 = 1 个工时；出勤不足 1 小时部分舍去；超过班制上限按上限计入。</view>
+  </view>
+
+  <view class="about-foot">感谢使用 · 数据留在你自己的手机里</view>
+</view>

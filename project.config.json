@@ -32,6 +32,14 @@
         "type": "file"
       },
       {
+        "value": "package.json",
+        "type": "file"
+      },
+      {
+        "value": "tools/**/*",
+        "type": "file"
+      },
+      {
         "value": "PRIVACY.md",
         "type": "file"
       },

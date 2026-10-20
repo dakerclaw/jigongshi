@@ -10,7 +10,7 @@
   <view class="card">
     <view class="picker-row">
       <view class="picker-row__label">查询月份</view>
-      <picker mode="date" fields="month" value="{{ym}}" bindchange="onMonthChange">
+      <picker mode="date" fields="month" value="{{ym}}" end="{{currentYm}}" bindchange="onMonthChange">
         <view class="picker-row__value">{{ymText}} ▾</view>
       </picker>
     </view>
@@ -39,6 +39,7 @@
         <view class="sum-card__label">日均（小时）</view>
       </view>
     </view>
+    <view class="sum-note" wx:if="{{unitsNote}}">逐日折合工时四舍五入，月合计按总工时计算</view>
   </view>
 
   <!-- 班次分布 -->

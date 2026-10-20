@@ -5,7 +5,7 @@
   详见项目根目录 LICENSE 文件。
   ------------------------------------------------------------------ -->
 
-<view class="tabbar">
+<view class="tabbar {{hidden ? 'tabbar--hidden' : ''}}">
   <view
     wx:for="{{list}}"
     wx:key="path"
@@ -15,7 +15,11 @@
     bindtap="onSwitch"
     hover-class="tabbar__item--hover"
   >
-    <view class="tabbar__icon">{{item.icon}}</view>
+    <image
+      class="tabbar__icon"
+      src="{{selected === index ? item.iconActive : item.icon}}"
+      mode="aspectFit"
+    />
     <view class="tabbar__text">{{item.text}}</view>
   </view>
 </view>

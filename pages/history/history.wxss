@@ -6,7 +6,7 @@
  * ------------------------------------------------------------------ */
 
 .page {
-  padding-bottom: 220rpx;
+  padding-bottom: calc(220rpx + env(safe-area-inset-bottom));
   min-height: 100vh;
 }
 
@@ -74,6 +74,15 @@
   font-size: 30rpx;
   opacity: 0.9;
   margin-top: 4rpx;
+}
+.sum-note {
+  margin-top: 16rpx;
+  padding-top: 14rpx;
+  border-top: 2rpx solid rgba(255, 255, 255, 0.25);
+  text-align: center;
+  font-size: 26rpx;
+  line-height: 1.5;
+  opacity: 0.9;
 }
 
 /* ---------------- 班次分布 ---------------- */

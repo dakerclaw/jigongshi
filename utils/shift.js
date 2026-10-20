@@ -16,6 +16,9 @@ const SHIFT_TYPES = [
   { key: '8h', label: '8小时班制', desc: '一天三班倒', shifts: ['白班', '中班', '夜班'] },
 ];
 
+const DEFAULT_TYPE = '12h';
+const SAFE_TYPE = '8h'; // 旧数据 / 未知班制按 8 小时保守封顶
+
 /** 取某班制下的班次列表 */
 function shiftsOf(type) {
   const t = SHIFT_TYPES.find((x) => x.key === type);
@@ -27,15 +30,24 @@ function labelOf(type) {
   return t ? t.label : '';
 }
 
+function isValidType(type) {
+  return SHIFT_TYPES.some((x) => x.key === type);
+}
+
+function isValidShift(type, shift) {
+  return shiftsOf(type).indexOf(shift) >= 0;
+}
+
 /**
  * 各班制的计酬工时上限（小时）
  * 12 小时班制：出勤超过 12 小时，按 12 小时计入工时
  * 8 小时班制 ：出勤超过 8 小时，按 8 小时计入工时
+ * 未知班制按 8 小时保守封顶，避免旧数据被高估。
  */
 const MAX_HOURS = { '12h': 12, '8h': 8 };
 
 function maxHoursOf(type) {
-  return MAX_HOURS[type] || MAX_HOURS['12h'];
+  return MAX_HOURS[type] || MAX_HOURS[SAFE_TYPE];
 }
 
 /** 班次 -> 样式后缀（day / mid / night） */
@@ -52,8 +64,10 @@ module.exports = {
   SHIFT_TYPES,
   shiftsOf,
   labelOf,
+  isValidType,
+  isValidShift,
   themeOf,
-  MAX_HOURS,
   maxHoursOf,
   HOUR_OPTIONS,
+  DEFAULT_TYPE,
 };

@@ -8,9 +8,10 @@
 const store = require('../../utils/store.js');
 const time = require('../../utils/time.js');
 const shiftUtil = require('../../utils/shift.js');
-const { toast, confirmDialog } = require('../../utils/ui.js');
+const { toast, confirmDialog, setTabBarHidden, haptic } = require('../../utils/ui.js');
 
 const app = getApp();
+const UNDO_MS = 8000;
 
 Page({
   data: {
@@ -27,10 +28,13 @@ Page({
     // 时钟
     nowTime: '00:00:00',
     nowDate: '',
+    nowYmd: '',
 
     // 未完成打卡
     pending: null,
     pendingElapsed: '0分钟',
+    pendingAlert: false,
+    pendingShiftTypeLabel: '',
 
     // 按工时记录
     hourOptions: shiftUtil.HOUR_OPTIONS,
@@ -40,6 +44,8 @@ Page({
     // 今日记录
     todayRecords: [],
     todayHours: 0,
+    todayHasCross: false,
+    undoRecord: null,
 
     // 班制选择弹层
     showShiftPicker: false,
@@ -53,26 +59,37 @@ Page({
   },
 
   timer: null,
+  undoTimer: null,
 
   /* ---------------- 生命周期 ---------------- */
 
   onLoad() {
-    this.setData({ pickerShifts: this.buildShifts(app.globalData.shiftType) });
-    this.applyShift(app.globalData.shiftType, app.globalData.shift);
+    const type = shiftUtil.isValidType(app.globalData.shiftType)
+      ? app.globalData.shiftType
+      : shiftUtil.DEFAULT_TYPE;
+    const shift = shiftUtil.isValidShift(type, app.globalData.shift)
+      ? app.globalData.shift
+      : shiftUtil.shiftsOf(type)[0];
+
+    this.setData({ pickerShifts: this.buildShifts(type) });
+    this.applyShift(type, shift);
 
     const cfg = store.getConfig();
-    if (!cfg || !cfg.shiftType || !cfg.shift) {
-      // 首次使用：先选班制
+    if (!cfg || !shiftUtil.isValidType(cfg.shiftType) || !shiftUtil.isValidShift(cfg.shiftType, cfg.shift)) {
+      // 首次使用：先选班制（此时隐藏 tabBar，避免绕过首次设置）
       this.setData({
         showShiftPicker: true,
         isFirstSet: true,
-        pickerType: app.globalData.shiftType,
-        pickerShift: app.globalData.shift,
+        pickerType: type,
+        pickerShift: shift,
       });
+      setTabBarHidden(this, true);
     }
   },
 
   onShow() {
+    // 弹层/首次设置打开时保持 tabBar 隐藏，避免从后台返回后误触
+    setTabBarHidden(this, !!(this.data.showShiftPicker || this.data.result.visible));
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 });
     }
@@ -83,10 +100,15 @@ Page({
 
   onHide() {
     this.stopClock();
+    this.clearUndoTimer();
+    this.setData({ undoRecord: null });
+    setTabBarHidden(this, false);
   },
 
   onUnload() {
     this.stopClock();
+    this.clearUndoTimer();
+    setTabBarHidden(this, false);
   },
 
   /* ---------------- 时钟 ---------------- */
@@ -106,11 +128,27 @@ Page({
 
   updateClock() {
     const n = time.now();
-    const data = { nowTime: n.hms, nowDate: n.ymd.slice(0, 4) + '年' + n.ymd.slice(5, 7) + '月' + n.ymd.slice(8, 10) + '日  ' + n.week };
+    const prevYmd = this.data.nowYmd;
+    const data = {
+      nowTime: n.hms,
+      nowYmd: n.ymd,
+      nowDate:
+        n.ymd.slice(0, 4) + '年' + n.ymd.slice(5, 7) + '月' + n.ymd.slice(8, 10) + '日  ' + n.week,
+    };
+
+    // 页面跨零点保持在前台时，自动刷新「今日记录」
+    if (prevYmd && prevYmd !== n.ymd) {
+      this.refreshToday(n.ymd);
+    }
+
     const p = this.data.pending;
     if (p && p.startTs) {
       const diff = Math.floor((Date.now() - p.startTs) / 60000);
       data.pendingElapsed = time.durationText(diff > 0 ? diff : 0);
+      data.pendingAlert = diff > 16 * 60;
+    } else {
+      data.pendingElapsed = '0分钟';
+      data.pendingAlert = false;
     }
     this.setData(data);
   },
@@ -122,11 +160,15 @@ Page({
   },
 
   applyShift(type, shift) {
+    const validType = shiftUtil.isValidType(type) ? type : shiftUtil.DEFAULT_TYPE;
+    const validShift = shiftUtil.isValidShift(validType, shift)
+      ? shift
+      : shiftUtil.shiftsOf(validType)[0];
     this.setData({
-      shiftType: type,
-      shift: shift,
-      shiftTheme: shiftUtil.themeOf(shift),
-      shiftTypeLabel: shiftUtil.labelOf(type),
+      shiftType: validType,
+      shift: validShift,
+      shiftTheme: shiftUtil.themeOf(validShift),
+      shiftTypeLabel: shiftUtil.labelOf(validType),
     });
   },
 
@@ -137,15 +179,17 @@ Page({
       pickerShift: this.data.shift,
       showShiftPicker: true,
     });
+    setTabBarHidden(this, true);
   },
 
   closeShiftPicker() {
     this.setData({ showShiftPicker: false });
+    setTabBarHidden(this, false);
   },
 
   onSheetMask() {
     if (this.data.isFirstSet) {
-      toast(this, '请先选择班制和班次');
+      toast('请先选择班制和班次');
       return;
     }
     this.closeShiftPicker();
@@ -167,10 +211,19 @@ Page({
 
   onConfirmShift() {
     const { pickerType, pickerShift } = this.data;
-    app.saveDefaultShift(pickerType, pickerShift);
+    if (!shiftUtil.isValidShift(pickerType, pickerShift)) {
+      toast('班制与班次不匹配，请重新选择');
+      return;
+    }
+    const saved = app.saveDefaultShift(pickerType, pickerShift);
     this.applyShift(pickerType, pickerShift);
     this.setData({ showShiftPicker: false, isFirstSet: false });
-    toast(this, '已设为默认：' + shiftUtil.labelOf(pickerType) + ' · ' + pickerShift);
+    setTabBarHidden(this, false);
+    toast(
+      saved
+        ? '已设为默认：' + shiftUtil.labelOf(pickerType) + ' · ' + pickerShift
+        : '已应用，但默认班制保存失败',
+    );
   },
 
   /* ---------------- 记录方式切换 ---------------- */
@@ -183,11 +236,19 @@ Page({
 
   refreshPending() {
     const p = store.getPending();
-    this.setData({ pending: p });
+    this.setData({
+      pending: p,
+      pendingShiftTypeLabel: p ? shiftUtil.labelOf(p.shiftType || this.data.shiftType) || '未知班制' : '',
+    });
     this.updateClock();
   },
 
   onClockIn() {
+    if (store.getPending()) {
+      toast('已经上班打卡，请先下班打卡');
+      this.refreshPending();
+      return;
+    }
     const n = time.now();
     const p = {
       date: n.ymd,
@@ -196,9 +257,18 @@ Page({
       shiftType: this.data.shiftType,
       shift: this.data.shift,
     };
-    store.setPending(p);
-    this.setData({ pending: p, pendingElapsed: '0分钟' });
-    toast(this, '已记下上班时间 ' + n.hm);
+    if (!store.setPending(p)) {
+      toast('上班打卡保存失败，请检查微信存储空间');
+      return;
+    }
+    haptic();
+    this.setData({
+      pending: p,
+      pendingElapsed: '0分钟',
+      pendingAlert: false,
+      pendingShiftTypeLabel: shiftUtil.labelOf(this.data.shiftType),
+    });
+    toast('已记下上班时间 ' + n.hm);
   },
 
   onCancelClock() {
@@ -208,9 +278,12 @@ Page({
       confirmText: '取消打卡',
       cancelText: '再想想',
       onConfirm: () => {
-        store.clearPending();
-        this.setData({ pending: null });
-        toast(this, '已取消本次上班打卡');
+        if (!store.clearPending()) {
+          toast('取消失败，请检查微信存储空间');
+          return;
+        }
+        this.setData({ pending: null, pendingElapsed: '0分钟', pendingAlert: false, pendingShiftTypeLabel: '' });
+        toast('已取消本次上班打卡');
       },
     });
   },
@@ -218,13 +291,16 @@ Page({
   onClockOut() {
     const p = store.getPending();
     if (!p) {
-      toast(this, '还没有上班打卡');
+      toast('还没有上班打卡');
       return;
     }
     const n = time.now();
     // 计酬上限按「上班打卡时所属班制」计算
     const cap = shiftUtil.maxHoursOf(p.shiftType || this.data.shiftType);
     const r = time.calcWork(p.startTs, n.ts, cap);
+
+    // 关键：保存时使用点击「下班打卡」这一刻的快照，避免确认弹窗停留跨过整点后结果变化
+    const save = () => this.doSaveTimeRecord(p, n, r);
 
     if (r.rawHours < 1) {
       confirmDialog({
@@ -235,7 +311,7 @@ Page({
           '，不足 1 小时的部分要舍去，折算为 0 工时。要保存吗？',
         confirmText: '仍然保存',
         cancelText: '不保存',
-        onConfirm: () => this.saveTimeRecordNow(),
+        onConfirm: save,
       });
       return;
     }
@@ -248,13 +324,13 @@ Page({
           time.durationText(r.minutes) +
           '，已超过 16 小时。若忘记打下班卡，建议先取消本次上班。',
         confirmText: '按此保存',
-        cancelText: '取消打卡',
-        onConfirm: () => this.saveTimeRecordNow(),
+        cancelText: '返回',
+        onConfirm: save,
       });
       return;
     }
 
-    this.doSaveTimeRecord(p, n, r);
+    save();
   },
 
   doSaveTimeRecord(p, n, r) {
@@ -272,23 +348,42 @@ Page({
       hours: r.hours, // 计入工时的整小时数（已按班制上限截断）
       cap: r.cap,
       capped: r.capped, // 是否因超出班制上限被封顶
-      restMinutes: r.restMinutes,
       units: r.units,
       crossDay: p.date !== n.ymd,
     };
-    store.addRecord(rec);
-    store.clearPending();
-    this.setData({ pending: null, selectedHour: 0, selectedUnits: '0.00' });
-    this.refreshToday();
 
-    const label = shiftUtil.labelOf(shiftType);
+    const saved = store.addRecord(rec);
+    if (!saved) {
+      toast('保存失败：本次记录未写入，请检查微信存储空间');
+      this.refreshPending();
+      return;
+    }
+
+    const cleared = store.clearPending();
+    haptic();
+    this.setData({ selectedHour: 0, selectedUnits: '0.00' });
+    if (cleared) {
+      this.setData({
+        pending: null,
+        pendingElapsed: '0分钟',
+        pendingAlert: false,
+        pendingShiftTypeLabel: '',
+      });
+    } else {
+      toast('记录已保存，但打卡状态清理失败，请勿重复下班打卡');
+    }
+
+    this.refreshToday(n.ymd);
+    if (!cleared) this.refreshPending();
+
+    const label = shiftUtil.labelOf(shiftType) || '未知班制';
     const rows = [
-      { k: '班　　次', v: p.shift + '（' + label + '）' },
-      { k: '上班时间', v: p.startTime },
+      { k: '班　　次', v: (p.shift || '未标注班次') + '（' + label + '）' },
+      { k: '上班时间', v: p.startTime || '--:--' },
       { k: '下班时间', v: n.hm + (rec.crossDay ? '（次日）' : '') },
       { k: '出勤时长', v: time.durationText(r.minutes) },
       { k: '计酬工时', v: r.hours + ' 小时' + (r.capped ? '（已封顶）' : '') },
-      { k: '折合工时', v: r.units + ' 个' },
+      { k: '折合工时', v: r.units.toFixed(2) + ' 个' },
     ];
     const note = r.capped
       ? label + '工时上限为 ' + r.cap + ' 小时，本次出勤 ' + time.durationText(r.minutes) + '，超出部分不计入工时。'
@@ -303,19 +398,19 @@ Page({
     const h = Number(e.currentTarget.dataset.hour);
     this.setData({
       selectedHour: h,
-      selectedUnits: time.round2(h / 8).toFixed(2),
+      selectedUnits: time.hoursToUnits(h).toFixed(2),
     });
   },
 
   onSaveHours() {
     const h = this.data.selectedHour;
     if (!h) {
-      toast(this, '请先选择小时数');
+      toast('请先选择小时数');
       return;
     }
     const n = time.now();
-    const units = time.round2(h / 8);
-    store.addRecord({
+    const units = time.hoursToUnits(h);
+    const saved = store.addRecord({
       date: n.ymd,
       endDate: n.ymd,
       shiftType: this.data.shiftType,
@@ -324,11 +419,18 @@ Page({
       startTime: '',
       endTime: '',
       minutes: h * 60,
+      rawHours: h,
       hours: h,
-      restMinutes: 0,
+      cap: 0,
+      capped: false,
       units: units,
       crossDay: false,
     });
+    if (!saved) {
+      toast('保存失败：本次记录未写入，请检查微信存储空间');
+      return;
+    }
+    haptic();
     this.setData({ selectedHour: 0, selectedUnits: '0.00' });
     this.refreshToday();
     this.showResult('记录成功', [
@@ -341,68 +443,109 @@ Page({
 
   /* ---------------- 今日记录 ---------------- */
 
-  refreshToday() {
-    const today = time.now().ymd;
-    const list = store
-      .getRecords()
-      .filter((r) => r.date === today)
-      .sort((a, b) => a.createdAt - b.createdAt);
-
-    const mapped = list.map((r) => ({
-      id: r.id,
-      shift: r.shift,
-      theme: shiftUtil.themeOf(r.shift),
-      typeLabel: r.mode === 'hours' ? '工时记录' : '打卡记录',
-      timeText:
-        r.mode === 'time'
-          ? r.startTime + ' - ' + r.endTime + (r.crossDay ? '（跨天）' : '')
-          : '',
-      hours: r.hours,
-      capped: !!r.capped,
-      cappedText: r.capped ? '出勤 ' + time.durationText(r.minutes) + '，已封顶' : '',
-      units: Number(r.units).toFixed(2),
-    }));
+  refreshToday(today) {
+    const day = today || time.now().ymd;
+    const all = store.getRecords();
+    // 今日 + 昨天上班、今天下班的跨天记录（endDate 已能表达跨天，兼容旧数据）
+    const list = all
+      .filter((r) => r && (r.date === day || (r.endDate === day && r.date !== day)))
+      .sort((a, b) => (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0));
 
     let sum = 0;
-    mapped.forEach((r) => (sum += r.hours));
-    this.setData({ todayRecords: mapped, todayHours: sum });
+    const mapped = list.map((r) => {
+      const hours = Number(r.hours) || 0;
+      const isCross = !!r.crossDay || (r.endDate && r.endDate !== r.date);
+      sum += hours;
+      return {
+        id: r.id,
+        shift: r.shift || '未标注班次',
+        theme: shiftUtil.themeOf(r.shift),
+        typeLabel: r.mode === 'hours' ? '工时记录' : '打卡记录',
+        timeText:
+          r.mode === 'time'
+            ? (r.startTime || '--:--') + ' - ' + (r.endTime || '--:--') + (isCross ? '（跨天）' : '')
+            : '',
+        dateLabel: r.date !== day ? time.mdText(r.date) : '',
+        hours: hours,
+        capped: !!r.capped,
+        units: time.hoursToUnits(hours).toFixed(2),
+      };
+    });
+
+    this.setData({
+      todayRecords: mapped,
+      todayHours: sum,
+      todayHasCross: list.some((r) => r.date !== day),
+    });
   },
 
   onDeleteRecord(e) {
     const id = e.currentTarget.dataset.id;
     confirmDialog({
       title: '删除这条记录？',
-      content: '删除后无法恢复。',
+      content: '删除后 8 秒内可点「撤销」恢复；超过时间将无法恢复。',
       confirmText: '删除',
       cancelText: '再想想',
       onConfirm: () => {
-        store.removeRecord(id);
+        const rec = store.getRecordById(id);
+        if (!store.removeRecord(id)) {
+          toast('删除失败，请检查微信存储空间');
+          return;
+        }
+        this.setData({ undoRecord: rec });
+        this.startUndoTimer();
         this.refreshToday();
-        toast(this, '已删除');
+        toast('已删除');
       },
     });
   },
 
-  /* ---------------- 保存（弹窗确认后回调） ---------------- */
+  startUndoTimer() {
+    this.clearUndoTimer();
+    this.undoTimer = setTimeout(() => {
+      this.setData({ undoRecord: null });
+      this.undoTimer = null;
+    }, UNDO_MS);
+  },
 
-  saveTimeRecordNow() {
-    const p = store.getPending();
-    if (p) {
-      const n = time.now();
-      // 与 onClockOut 保持一致：按「上班打卡时所属班制」取计酬上限
-      const cap = shiftUtil.maxHoursOf(p.shiftType || this.data.shiftType);
-      this.doSaveTimeRecord(p, n, time.calcWork(p.startTs, n.ts, cap));
+  clearUndoTimer() {
+    if (this.undoTimer) {
+      clearTimeout(this.undoTimer);
+      this.undoTimer = null;
     }
   },
+
+  onUndoDelete() {
+    const rec = this.data.undoRecord;
+    if (!rec) return;
+    if (!store.restoreRecord(rec)) {
+      toast('撤销失败，请检查存储空间');
+      return;
+    }
+    this.clearUndoTimer();
+    this.setData({ undoRecord: null });
+    this.refreshToday();
+    toast('已撤销删除');
+  },
+
+  /* ---------------- 结果弹层 ---------------- */
 
   showResult(title, rows, note) {
     this.setData({
       result: { visible: true, title: title, rows: rows, note: note || '' },
     });
+    setTabBarHidden(this, true);
   },
 
   closeResult() {
     this.setData({ 'result.visible': false });
+    setTabBarHidden(this, false);
+  },
+
+  /* ---------------- 关于 / 分享 ---------------- */
+
+  onOpenAbout() {
+    wx.navigateTo({ url: '/pages/about/about' });
   },
 
   onShareAppMessage() {

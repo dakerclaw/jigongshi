@@ -10,7 +10,7 @@
  * 替代原 TDesign 的 t-toast / t-dialog（已彻底移除依赖）
  */
 
-function toast(page, message) {
+function toast(message) {
   wx.showToast({ title: message, icon: 'none', duration: 2000 });
 }
 
@@ -26,4 +26,22 @@ function confirmDialog({ title, content, confirmText, cancelText, onConfirm }) {
   });
 }
 
-module.exports = { toast, confirmDialog };
+/** 隐藏/显示自定义 tabBar（弹层打开时避免误触） */
+function setTabBarHidden(page, hidden) {
+  if (!page || typeof page.getTabBar !== 'function') return;
+  const bar = page.getTabBar();
+  if (bar && typeof bar.setData === 'function') {
+    bar.setData({ hidden: !!hidden });
+  }
+}
+
+/** 轻触反馈：失败也不影响业务 */
+function haptic() {
+  try {
+    if (wx.vibrateShort) wx.vibrateShort({ type: 'light' });
+  } catch (e) {
+    // 部分机型/版本不支持，忽略
+  }
+}
+
+module.exports = { toast, confirmDialog, setTabBarHidden, haptic };

@@ -8,35 +8,62 @@
 const store = require('../../utils/store.js');
 const time = require('../../utils/time.js');
 const shiftUtil = require('../../utils/shift.js');
-const { toast, confirmDialog } = require('../../utils/ui.js');
+const stats = require('../../utils/stats.js');
+const { toast, confirmDialog, setTabBarHidden, haptic } = require('../../utils/ui.js');
 
 const app = getApp();
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function emptyRecordEdit() {
+  return {
+    visible: false,
+    id: '',
+    mode: 'time',
+    date: '',
+    shiftType: '',
+    shifts: [],
+    shift: '',
+    startTime: '08:00',
+    endTime: '17:00',
+    hour: 0,
+    units: '0.00',
+    previewText: '',
+    previewUnits: '0.00',
+    crossDay: false,
+    canSave: false,
+  };
+}
 
 Page({
   data: {
     ym: '',
     ymText: '',
+    currentYm: '',
+    canNext: false,
     rows: [],
     totalHours: 0,
     totalUnits: '0.00',
     workDays: 0,
     avgHours: '0.0',
+    unitsNote: false,
 
-    // 当天明细 / 补记
+    // 当天明细 / 补记 / 单条编辑
     daySheet: { visible: false, date: '', title: '', records: [], totalHours: 0, totalUnits: '0.00' },
     hourOptions: shiftUtil.HOUR_OPTIONS,
-    editShifts: [],
-    editShift: '白班',
-    editHour: 0,
-    editUnits: '0.00',
-    editMode: 'add', // 'add': 这天还没有记录走补记；'edit': 已有记录走修改
+    addShifts: [],
+    addShift: '',
+    addHour: 0,
+    addUnits: '0.00',
+    recordEdit: emptyRecordEdit(),
   },
 
   onLoad() {
-    this.setData({ ym: time.currentYm() });
+    const ym = time.currentYm();
+    this.setData({ ym: ym, currentYm: ym });
   },
 
   onShow() {
+    setTabBarHidden(this, !!this.data.daySheet.visible);
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 1 });
     }
@@ -49,57 +76,47 @@ Page({
   },
 
   onHide() {
-    this.setData({ 'daySheet.visible': false });
+    setTabBarHidden(this, false);
+    this.setData({ 'daySheet.visible': false, 'recordEdit.visible': false });
   },
 
   /** 载入某月数据（出勤明细展示整月每一天，无记录的天班次显示「无」） */
   load(ym) {
-    const list = store.getRecordsByMonth(ym);
-    const map = {};
+    const currentYm = time.currentYm();
+    let month = String(ym || currentYm);
+    if (month > currentYm) month = currentYm; // 防御：不再展示未来月份
 
-    list.forEach((r) => {
-      if (!map[r.date]) {
-        map[r.date] = { date: r.date, hours: 0, shifts: [], count: 0 };
-      }
-      const it = map[r.date];
-      it.hours += Number(r.hours) || 0;
-      it.count += 1;
-      if (it.shifts.indexOf(r.shift) < 0) it.shifts.push(r.shift);
-    });
+    const list = store.getRecordsByMonth(month);
+    const dayMap = stats.buildDayMap(list);
+    const sum = stats.summarize(list);
 
-    const p = String(ym).split('-');
+    const p = month.split('-');
     const daysInMonth = new Date(Number(p[0]), Number(p[1]), 0).getDate();
 
     // 未到的日期不显示：当月只显示到今天，未来月份整月不显示
     const now = new Date();
     const nowYm = now.getFullYear() + '-' + time.pad2(now.getMonth() + 1);
     let lastDay = daysInMonth;
-    if (String(ym) === nowYm) {
+    if (month === nowYm) {
       lastDay = now.getDate();
-    } else if (String(ym) > nowYm) {
+    } else if (month > nowYm) {
       lastDay = 0;
     }
 
-    let totalHours = 0;
-    let workDays = 0;
     const rows = [];
-
     for (let d = lastDay; d >= 1; d--) {
       const date = p[0] + '-' + p[1] + '-' + time.pad2(d);
-      const it = map[date];
+      const it = dayMap[date];
       const base = {
         date: date,
         md: time.mdText(date),
         week: time.weekOf(date),
       };
       if (it) {
-        totalHours += it.hours;
-        workDays += 1;
         rows.push(
           Object.assign(base, {
             hours: it.hours,
-            units: time.round2(it.hours / 8).toFixed(2),
-            count: it.count,
+            units: time.hoursToUnits(it.hours).toFixed(2),
             shiftList: it.shifts.map((s) => ({ name: s, theme: shiftUtil.themeOf(s) })),
           }),
         );
@@ -108,7 +125,6 @@ Page({
           Object.assign(base, {
             hours: 0,
             units: '0.00',
-            count: 0,
             shiftList: [],
           }),
         );
@@ -116,13 +132,16 @@ Page({
     }
 
     this.setData({
-      ym: ym,
-      ymText: time.ymText(ym),
+      ym: month,
+      ymText: time.ymText(month),
+      currentYm: currentYm,
+      canNext: month < currentYm,
       rows: rows,
-      totalHours: totalHours,
-      totalUnits: time.round2(totalHours / 8).toFixed(2),
-      workDays: workDays,
-      avgHours: workDays ? (Math.round((totalHours / workDays) * 10) / 10).toFixed(1) : '0.0',
+      totalHours: sum.totalHours,
+      totalUnits: sum.totalUnits.toFixed(2),
+      workDays: sum.workDays,
+      avgHours: sum.avgHours,
+      unitsNote: stats.hasRoundingGap(dayMap, sum.totalUnits),
     });
   },
 
@@ -135,34 +154,36 @@ Page({
   openDaySheet(date) {
     const recs = store
       .getRecords()
-      .filter((r) => r.date === date)
-      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      .filter((r) => r && r.date === date)
+      .sort((a, b) => (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0));
 
     let totalHours = 0;
     const records = recs.map((r) => {
-      totalHours += Number(r.hours) || 0;
+      const hours = Number(r.hours) || 0;
+      totalHours += hours;
       return {
         id: r.id,
-        shift: r.shift,
+        shift: r.shift || '未标注班次',
         theme: shiftUtil.themeOf(r.shift),
         timeText:
           r.mode === 'time'
-            ? r.startTime + ' - ' + r.endTime + (r.crossDay ? '（跨天）' : '')
-            : '直接记录 ' + r.hours + ' 小时',
-        hours: r.hours,
+            ? (r.startTime || '--:--') + ' - ' + (r.endTime || '--:--') + (r.crossDay ? '（跨天）' : '')
+            : '直接记录 ' + hours + ' 小时',
+        hours: hours,
         capped: !!r.capped,
         cappedText: r.capped ? '出勤 ' + time.durationText(r.minutes) + '，已按上限计入' : '',
-        units: Number(r.units).toFixed(2),
+        units: time.hoursToUnits(hours).toFixed(2),
       };
     });
 
-    const editShifts = shiftUtil.shiftsOf(app.globalData.shiftType).map((name) => ({ name: name }));
-
-    // 修改模式：预填已有记录的班次与合计工时；无记录则走补记
-    const hasRecs = records.length > 0;
-    let prefillShift = hasRecs ? records[0].shift : app.globalData.shift;
-    if (!editShifts.some((x) => x.name === prefillShift)) prefillShift = editShifts[0].name;
-    const prefillHour = hasRecs ? Math.round(records.reduce((s, r) => s + Number(r.hours), 0)) : 0;
+    const addShifts = shiftUtil.shiftsOf(app.globalData.shiftType).map((name) => ({
+      name: name,
+      theme: shiftUtil.themeOf(name),
+    }));
+    let addShift = records.length ? records[0].shift : app.globalData.shift;
+    if (!shiftUtil.isValidShift(app.globalData.shiftType, addShift)) {
+      addShift = addShifts[0].name;
+    }
 
     this.setData({
       daySheet: {
@@ -171,68 +192,275 @@ Page({
         title: time.mdText(date) + ' ' + time.weekOf(date),
         records: records,
         totalHours: totalHours,
-        totalUnits: time.round2(totalHours / 8).toFixed(2),
+        totalUnits: time.hoursToUnits(totalHours).toFixed(2),
       },
-      editShifts: editShifts,
-      editShift: prefillShift,
-      editHour: prefillHour,
-      editUnits: time.round2(prefillHour / 8).toFixed(2),
-      editMode: hasRecs ? 'edit' : 'add',
+      addShifts: addShifts,
+      addShift: addShift,
+      addHour: 0,
+      addUnits: '0.00',
+      recordEdit: emptyRecordEdit(),
     });
+    setTabBarHidden(this, true);
   },
 
   closeDaySheet() {
-    this.setData({ 'daySheet.visible': false });
+    this.setData({ 'daySheet.visible': false, 'recordEdit.visible': false });
+    setTabBarHidden(this, false);
   },
 
-  /* ---------------- 修改 / 补记 ---------------- */
+  /* ---------------- 补记 ---------------- */
 
-  onPickEditShift(e) {
-    this.setData({ editShift: e.currentTarget.dataset.shift });
+  onPickAddShift(e) {
+    this.setData({ addShift: e.currentTarget.dataset.shift });
   },
 
-  onPickEditHour(e) {
+  onPickAddHour(e) {
     const h = Number(e.currentTarget.dataset.hour);
     this.setData({
-      editHour: h,
-      editUnits: time.round2(h / 8).toFixed(2),
+      addHour: h,
+      addUnits: time.hoursToUnits(h).toFixed(2),
     });
   },
 
-  onSaveEdit() {
-    const { editHour, editShift, daySheet, editMode } = this.data;
-    if (!editHour) {
-      toast(this, editMode === 'edit' ? '请先选择修改后的小时数' : '请先选择补记的小时数');
+  onSaveAdd() {
+    const { addHour, addShift, daySheet } = this.data;
+    if (!addHour) {
+      toast('请先选择补记的小时数');
       return;
     }
     const date = daySheet.date;
-
-    if (editMode === 'edit') {
-      // 修改模式：先删除当天全部原有记录，仅保留修改后的单条记录
-      store.getRecords().filter((r) => r.date === date).forEach((r) => store.removeRecord(r.id));
-    }
-
-    store.addRecord({
+    const saved = store.addRecord({
       date: date,
       endDate: date,
       shiftType: app.globalData.shiftType,
-      shift: editShift,
+      shift: addShift,
       mode: 'hours',
       startTime: '',
       endTime: '',
-      minutes: editHour * 60,
-      hours: editHour,
-      restMinutes: 0,
-      units: time.round2(editHour / 8),
+      minutes: addHour * 60,
+      rawHours: addHour,
+      hours: addHour,
+      cap: 0,
+      capped: false,
+      units: time.hoursToUnits(addHour),
       crossDay: false,
     });
-
+    if (!saved) {
+      toast('补记失败，请检查微信存储空间');
+      return;
+    }
+    haptic();
     this.load(this.data.ym);
     this.openDaySheet(date);
-    toast(
-      this,
-      (editMode === 'edit' ? '已修改 ' : '已补记 ') + time.mdText(date) + ' ' + editShift + ' ' + editHour + ' 小时',
-    );
+    toast('已补记 ' + time.mdText(date) + ' ' + addShift + ' ' + addHour + ' 小时');
+  },
+
+  /* ---------------- 编辑单条记录 ---------------- */
+
+  onEditRecord(e) {
+    const id = e.currentTarget.dataset.id;
+    const r = store.getRecordById(id);
+    if (!r) {
+      toast('记录不存在，可能已被删除');
+      return;
+    }
+    const shiftType = shiftUtil.isValidType(r.shiftType) ? r.shiftType : app.globalData.shiftType;
+    const shifts = shiftUtil.shiftsOf(shiftType).map((name) => ({
+      name: name,
+      theme: shiftUtil.themeOf(name),
+    }));
+    const shift = shiftUtil.isValidShift(shiftType, r.shift) ? r.shift : shifts[0].name;
+    const mode = r.mode === 'time' ? 'time' : 'hours';
+    const hour = Number(r.hours) || 0;
+
+    this.setData({
+      recordEdit: {
+        visible: true,
+        id: r.id,
+        mode: mode,
+        date: r.date,
+        shiftType: shiftType,
+        shifts: shifts,
+        shift: shift,
+        startTime: r.startTime || '08:00',
+        endTime: r.endTime || '17:00',
+        hour: hour,
+        units: time.hoursToUnits(hour).toFixed(2),
+        previewText: '',
+        previewUnits: '0.00',
+        crossDay: !!r.crossDay,
+        canSave: false,
+      },
+    });
+    this.updateRecordPreview();
+  },
+
+  onRecordEditShift(e) {
+    this.setData({ 'recordEdit.shift': e.currentTarget.dataset.shift });
+  },
+
+  onRecordEditStart(e) {
+    this.setData({ 'recordEdit.startTime': e.detail.value });
+    this.updateRecordPreview();
+  },
+
+  onRecordEditEnd(e) {
+    this.setData({ 'recordEdit.endTime': e.detail.value });
+    this.updateRecordPreview();
+  },
+
+  onRecordEditHour(e) {
+    const h = Number(e.currentTarget.dataset.hour);
+    this.setData({
+      'recordEdit.hour': h,
+      'recordEdit.units': time.hoursToUnits(h).toFixed(2),
+    });
+    this.updateRecordPreview();
+  },
+
+  updateRecordPreview() {
+    const e = this.data.recordEdit;
+    if (!e || !e.visible) return;
+
+    if (e.mode === 'hours') {
+      const units = time.hoursToUnits(e.hour);
+      this.setData({
+        'recordEdit.units': units.toFixed(2),
+        'recordEdit.previewUnits': units.toFixed(2),
+        'recordEdit.canSave': e.hour > 0,
+      });
+      return;
+    }
+
+    const startTs = time.tsOf(e.date, e.startTime);
+    let endTs = time.tsOf(e.date, e.endTime);
+    if (endTs === startTs) {
+      this.setData({
+        'recordEdit.crossDay': false,
+        'recordEdit.canSave': false,
+        'recordEdit.previewText': '结束时间不能与开始时间相同',
+        'recordEdit.previewUnits': '0.00',
+      });
+      return;
+    }
+
+    const cross = endTs < startTs;
+    if (cross) endTs += DAY_MS;
+    const cap = shiftUtil.maxHoursOf(e.shiftType);
+    const r = time.calcWork(startTs, endTs, cap);
+
+    this.setData({
+      'recordEdit.crossDay': cross,
+      'recordEdit.canSave': r.minutes > 0,
+      'recordEdit.previewText':
+        time.durationText(r.minutes) + ' → ' + r.hours + ' 小时' + (r.capped ? '（已封顶）' : ''),
+      'recordEdit.previewUnits': r.units.toFixed(2),
+    });
+  },
+
+  onCancelRecordEdit() {
+    this.setData({ 'recordEdit.visible': false });
+  },
+
+  onSaveRecordEdit() {
+    const e = this.data.recordEdit;
+    if (!e || !e.visible) return;
+    if (!e.canSave) {
+      toast('请先选择有效的班次与时间/小时数');
+      return;
+    }
+
+    const date = this.data.daySheet.date || e.date;
+    if (e.mode === 'hours') {
+      const h = e.hour;
+      this.commitRecordEdit(
+        {
+          date: e.date,
+          endDate: e.date,
+          shiftType: e.shiftType,
+          shift: e.shift,
+          mode: 'hours',
+          startTime: '',
+          endTime: '',
+          minutes: h * 60,
+          rawHours: h,
+          hours: h,
+          cap: 0,
+          capped: false,
+          units: time.hoursToUnits(h),
+          crossDay: false,
+        },
+        date,
+      );
+      return;
+    }
+
+    const startTs = time.tsOf(e.date, e.startTime);
+    let endTs = time.tsOf(e.date, e.endTime);
+    if (endTs === startTs) {
+      toast('结束时间不能与开始时间相同');
+      return;
+    }
+    const cross = endTs < startTs;
+    if (cross) endTs += DAY_MS;
+
+    const cap = shiftUtil.maxHoursOf(e.shiftType);
+    const r = time.calcWork(startTs, endTs, cap);
+    const endInfo = time.toInfo(new Date(endTs));
+    const patch = {
+      date: e.date,
+      endDate: endInfo.ymd,
+      shiftType: e.shiftType,
+      shift: e.shift,
+      mode: 'time',
+      startTime: e.startTime,
+      endTime: e.endTime,
+      minutes: r.minutes,
+      rawHours: r.rawHours,
+      hours: r.hours,
+      cap: r.cap,
+      capped: r.capped,
+      units: r.units,
+      crossDay: cross,
+    };
+
+    const save = () => this.commitRecordEdit(patch, date);
+
+    if (r.rawHours < 1) {
+      confirmDialog({
+        title: '出勤不足 1 小时',
+        content:
+          '本次出勤 ' + time.durationText(r.minutes) + '，不足 1 小时的部分要舍去，折算为 0 工时。要保存吗？',
+        confirmText: '仍然保存',
+        cancelText: '不保存',
+        onConfirm: save,
+      });
+      return;
+    }
+    if (r.tooLong) {
+      confirmDialog({
+        title: '是否忘记打卡？',
+        content:
+          '本次时长 ' + time.durationText(r.minutes) + '，已超过 16 小时。请确认起止时间是否正确。',
+        confirmText: '按此保存',
+        cancelText: '返回修改',
+        onConfirm: save,
+      });
+      return;
+    }
+    save();
+  },
+
+  commitRecordEdit(patch, date) {
+    if (!store.updateRecord(this.data.recordEdit.id, patch)) {
+      toast('保存失败，请检查微信存储空间');
+      return;
+    }
+    haptic();
+    this.setData({ 'recordEdit.visible': false });
+    this.load(this.data.ym);
+    this.openDaySheet(date);
+    toast('已保存修改');
   },
 
   /* ---------------- 删除单条 ---------------- */
@@ -246,10 +474,16 @@ Page({
       confirmText: '删除',
       cancelText: '再想想',
       onConfirm: () => {
-        store.removeRecord(id);
+        if (!store.removeRecord(id)) {
+          toast('删除失败，请检查微信存储空间');
+          return;
+        }
+        if (this.data.recordEdit.id === id) {
+          this.setData({ 'recordEdit.visible': false });
+        }
         this.load(this.data.ym);
         if (date) this.openDaySheet(date);
-        toast(this, '已删除');
+        toast('已删除');
       },
     });
   },
@@ -267,11 +501,21 @@ Page({
   },
 
   onNextMonth() {
+    if (!this.data.canNext) {
+      toast('已经是当前月份');
+      return;
+    }
     this.load(this.shiftMonth(this.data.ym, 1));
   },
 
   onMonthChange(e) {
-    this.load(e.detail.value);
+    const ym = String(e.detail.value || '');
+    if (!ym) return;
+    if (ym > time.currentYm()) {
+      toast('不能查看未来月份');
+      return;
+    }
+    this.load(ym);
   },
 
   onShareAppMessage() {

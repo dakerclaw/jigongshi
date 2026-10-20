@@ -9,10 +9,10 @@
   <!-- 月份切换 -->
   <view class="card month-nav">
     <view class="month-nav__btn" bindtap="onPrevMonth">‹ 上月</view>
-    <picker mode="date" fields="month" value="{{ym}}" bindchange="onMonthChange">
+    <picker mode="date" fields="month" value="{{ym}}" end="{{currentYm}}" bindchange="onMonthChange">
       <view class="month-nav__ym">{{ymText}} ▾</view>
     </picker>
-    <view class="month-nav__btn" bindtap="onNextMonth">下月 ›</view>
+    <view class="month-nav__btn {{canNext ? '' : 'is-disabled'}}" bindtap="onNextMonth">下月 ›</view>
   </view>
 
   <!-- 本月汇总 -->
@@ -46,7 +46,7 @@
 
     <view class="table">
       <view class="table__head">
-        <view class="table__th table__c1">日期<i class="table__sort">↓</i></view>
+        <view class="table__th table__c1">日期<text class="table__sort">↓</text></view>
         <view class="table__th table__c2">班次</view>
         <view class="table__th table__c3">工时数</view>
       </view>
@@ -90,13 +90,16 @@
       </view>
     </view>
 
-    <view class="table__tip">点上面任意一天，可查看明细、修改或补记工时</view>
+    <view class="table__tip">点上面任意一天，可查看明细、编辑单条记录或补记工时</view>
+    <view class="table__tip" wx:if="{{unitsNote}}">
+      逐日折合工时四舍五入，月合计按总工时计算，可能有 0.01 差异
+    </view>
   </view>
 
   <view class="foot-space"></view>
 </view>
 
-<!-- ========== 当天明细 / 补记弹层 ========== -->
+<!-- ========== 当天明细 / 编辑 / 补记弹层 ========== -->
 <view class="mask" wx:if="{{daySheet.visible}}" bindtap="closeDaySheet"></view>
 <view class="sheet sheet--tall {{daySheet.visible ? 'sheet--show' : ''}}">
   <view class="sheet__bar"></view>
@@ -111,9 +114,15 @@
           <text class="day-rec__cap" wx:if="{{item.capped}}">{{item.cappedText}}</text>
         </view>
         <view class="day-rec__r">
-          <text class="num day-rec__h">{{item.hours}}</text>
-          <text class="day-rec__u">小时</text>
-          <text class="day-rec__del" data-id="{{item.id}}" bindtap="onDeleteOne">删除</text>
+          <view>
+            <text class="num day-rec__h">{{item.hours}}</text>
+            <text class="day-rec__u">小时</text>
+          </view>
+          <text class="day-rec__units">≈ {{item.units}} 工时</text>
+          <view class="day-rec__ops">
+            <text class="day-rec__edit" data-id="{{item.id}}" bindtap="onEditRecord">编辑</text>
+            <text class="day-rec__del" data-id="{{item.id}}" bindtap="onDeleteOne">删除</text>
+          </view>
         </view>
       </view>
       <view class="day-sum">
@@ -121,45 +130,128 @@
         （≈ <text class="num">{{daySheet.totalUnits}}</text> 工时）
       </view>
     </block>
-    <view wx:else class="empty empty--in-sheet">
+    <view wx:if="{{!daySheet.records.length}}" class="empty empty--in-sheet">
       <view class="empty__icon">📭</view>
       <view>这天还没有记录</view>
     </view>
 
-    <view class="sheet__title">{{editMode === 'edit' ? '修改这一天的工时' : '补记这一天的工时'}}</view>
-    <view class="shift-row">
-      <view
-        wx:for="{{editShifts}}"
-        wx:key="name"
-        class="shift-chip {{editShift === item.name ? 'is-active' : ''}}"
-        data-shift="{{item.name}}"
-        bindtap="onPickEditShift"
-      >
-        {{item.name}}
+    <!-- 单条记录编辑 -->
+    <view class="rec-edit" wx:if="{{recordEdit.visible}}">
+      <view class="rec-edit__title">编辑这条记录</view>
+      <view class="shift-row">
+        <view
+          wx:for="{{recordEdit.shifts}}"
+          wx:key="name"
+          class="shift-chip {{recordEdit.shift === item.name ? 'is-active' : ''}}"
+          data-shift="{{item.name}}"
+          bindtap="onRecordEditShift"
+        >
+          {{item.name}}
+        </view>
+      </view>
+
+      <block wx:if="{{recordEdit.mode === 'time'}}">
+        <view class="time-row">
+          <picker mode="time" value="{{recordEdit.startTime}}" bindchange="onRecordEditStart">
+            <view class="time-box">{{recordEdit.startTime}}</view>
+          </picker>
+          <text class="time-sep">至</text>
+          <picker mode="time" value="{{recordEdit.endTime}}" bindchange="onRecordEditEnd">
+            <view class="time-box">{{recordEdit.endTime}}</view>
+          </picker>
+        </view>
+        <view class="calc-box">
+          <view class="calc-box__line">
+            <text class="calc-box__k">出勤</text>
+            <text class="calc-box__v">{{recordEdit.previewText}}</text>
+          </view>
+          <view class="calc-box__line">
+            <text class="calc-box__k">折合工时</text>
+            <text class="calc-box__v calc-box__v--big num">{{recordEdit.previewUnits}}</text>
+            <text class="calc-box__unit">个</text>
+          </view>
+          <view class="calc-box__note">
+            {{recordEdit.crossDay ? '结束时间早于开始时间，已按跨天计算' : '同一天内计算'}}
+          </view>
+        </view>
+      </block>
+
+      <block wx:if="{{recordEdit.mode !== 'time'}}">
+        <view class="hour-grid">
+          <view
+            wx:for="{{hourOptions}}"
+            wx:key="*this"
+            class="hour-cell {{recordEdit.hour === item ? 'is-active' : ''}}"
+            data-hour="{{item}}"
+            bindtap="onRecordEditHour"
+          >
+            {{item}} 小时
+          </view>
+        </view>
+        <view class="calc-box" wx:if="{{recordEdit.hour}}">
+          <view class="calc-box__line">
+            <text class="calc-box__k">折合工时</text>
+            <text class="calc-box__v calc-box__v--big num">{{recordEdit.units}}</text>
+            <text class="calc-box__unit">个</text>
+          </view>
+          <view class="calc-box__note">8 小时 = 1 个工时</view>
+        </view>
+      </block>
+
+      <view class="rec-edit__ops">
+        <view class="big-btn big-btn--gray" bindtap="onCancelRecordEdit">取 消</view>
+        <view
+          class="big-btn {{recordEdit.canSave ? 'big-btn--primary' : 'big-btn--disabled'}}"
+          bindtap="onSaveRecordEdit"
+        >
+          保存修改
+        </view>
       </view>
     </view>
 
-    <view class="hour-grid">
+    <!-- 补记一条记录（编辑单条时隐藏，避免误操作） -->
+    <view class="rec-edit" wx:if="{{!recordEdit.visible}}">
+      <view class="rec-edit__title">补记一条记录</view>
+      <view class="shift-row">
+        <view
+          wx:for="{{addShifts}}"
+          wx:key="name"
+          class="shift-chip {{addShift === item.name ? 'is-active' : ''}}"
+          data-shift="{{item.name}}"
+          bindtap="onPickAddShift"
+        >
+          {{item.name}}
+        </view>
+      </view>
+      <view class="hour-grid">
+        <view
+          wx:for="{{hourOptions}}"
+          wx:key="*this"
+          class="hour-cell {{addHour === item ? 'is-active' : ''}}"
+          data-hour="{{item}}"
+          bindtap="onPickAddHour"
+        >
+          {{item}} 小时
+        </view>
+      </view>
+      <view class="calc-box" wx:if="{{addHour}}">
+        <view class="calc-box__line">
+          <text class="calc-box__k">折合工时</text>
+          <text class="calc-box__v calc-box__v--big num">{{addUnits}}</text>
+          <text class="calc-box__unit">个</text>
+        </view>
+        <view class="calc-box__note">8 小时 = 1 个工时</view>
+      </view>
       <view
-        wx:for="{{hourOptions}}"
-        wx:key="*this"
-        class="hour-cell {{editHour === item ? 'is-active' : ''}}"
-        data-hour="{{item}}"
-        bindtap="onPickEditHour"
+        class="big-btn {{addHour ? 'big-btn--primary' : 'big-btn--disabled'}}"
+        bindtap="onSaveAdd"
       >
-        {{item}} 小时
+        保存补记
       </view>
     </view>
-
   </scroll-view>
 
   <view class="sheet__footer">
     <view class="big-btn big-btn--gray" bindtap="closeDaySheet">关 闭</view>
-    <view
-      class="big-btn {{editHour ? 'big-btn--primary' : 'big-btn--disabled'}}"
-      bindtap="onSaveEdit"
-    >
-      {{editMode === 'edit' ? '保 存 修 改' : '保 存 补 记'}}
-    </view>
   </view>
 </view>

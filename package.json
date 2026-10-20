@@ -1,12 +1,16 @@
 {
   "name": "jigongshi",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.1.0",
+  "description": "出勤轻松记：纯本地工时记录微信小程序",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "check": "node tools/check.js",
+    "test": "node tools/test-core.js"
   },
-  "keywords": [],
+  "keywords": [
+    "wechat-miniprogram",
+    "timesheet"
+  ],
   "author": "dakerclaw",
   "license": "UNLICENSED",
   "private": true,

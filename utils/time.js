@@ -11,6 +11,8 @@
  */
 
 const WEEK_CN = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+const HOURS_PER_UNIT = 8; // 8 小时 = 1 个工时
+const TOO_LONG_MS = 16 * 60 * 60 * 1000; // 超过 16 小时，疑似忘记打卡
 
 function pad2(n) {
   return n < 10 ? '0' + n : '' + n;
@@ -37,6 +39,12 @@ function now() {
   return toInfo(new Date());
 }
 
+/** 小时数 -> 折合工时个数（8 小时 = 1 个），保留两位小数 */
+function hoursToUnits(hours) {
+  const h = Number(hours) || 0;
+  return round2((h > 0 ? h : 0) / HOURS_PER_UNIT);
+}
+
 /**
  * 计算出勤与工时（按真实时间差，天然支持跨天夜班）
  * @param {number} startTs 上班时间戳
@@ -50,33 +58,50 @@ function now() {
  */
 function calcWork(startTs, endTs, capHours) {
   let diff = endTs - startTs;
-  if (diff < 0) diff = 0;
+  if (!(diff > 0)) diff = 0;
   const totalMinutes = Math.floor(diff / 60000);
   const rawHours = Math.floor(totalMinutes / 60); // 不足 1 小时部分舍去
   const cap = Number(capHours) > 0 ? Number(capHours) : 0;
   const capped = !!(cap && rawHours > cap);
   const hours = capped ? cap : rawHours; // 超过班制上限按上限计入
-  const minutes = totalMinutes % 60;
   return {
     minutes: totalMinutes, // 原始出勤分钟数
     rawHours: rawHours, // 原始出勤整小时数
     hours: hours, // 计入工时的整小时数（已按上限截断）
     cap: cap,
     capped: capped,
-    restMinutes: minutes,
-    units: round2(hours / 8), // 8 小时 = 1 工时
-    tooLong: totalMinutes > 16 * 60, // 超过 16 小时，疑似忘记打卡
+    units: hoursToUnits(hours),
+    tooLong: diff > TOO_LONG_MS, // 按真实毫秒判断，避免 16:00:30 被漏判
   };
 }
 
+/**
+ * '2026-09-03' + '07:52' -> 时间戳
+ * 用于「编辑记录」时由日期与时间还原真实时间点。
+ */
+function tsOf(dateStr, hm) {
+  const dp = String(dateStr || '').split('-');
+  const tp = String(hm || '00:00').split(':');
+  const d = new Date(
+    Number(dp[0]) || 1970,
+    (Number(dp[1]) || 1) - 1,
+    Number(dp[2]) || 1,
+    Number(tp[0]) || 0,
+    Number(tp[1]) || 0,
+    0,
+  );
+  return d.getTime();
+}
+
 function round2(n) {
-  return Math.round(n * 100) / 100;
+  return Math.round((Number(n) || 0) * 100) / 100;
 }
 
 /** 分钟 -> "11小时38分" */
 function durationText(minutes) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
+  const total = Math.max(0, Math.floor(Number(minutes) || 0));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
   if (h <= 0) return m + '分钟';
   if (m === 0) return h + '小时';
   return h + '小时' + m + '分';
@@ -110,6 +135,7 @@ function currentYm() {
 
 module.exports = {
   pad2,
+  toInfo,
   now,
   calcWork,
   durationText,
@@ -118,5 +144,7 @@ module.exports = {
   ymText,
   currentYm,
   round2,
-  WEEK_CN,
+  hoursToUnits,
+  tsOf,
+  HOURS_PER_UNIT,
 };

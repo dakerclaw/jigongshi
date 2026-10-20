@@ -10,6 +10,12 @@ project.private.config.json
 # 本地智能体工作区（记忆、配置等本地状态）
 .workbuddy/
 
+# 本地临时目录
+tmp/
+
+# 凭证（如后续需要）
+id.txt
+
 # 系统文件
 .DS_Store
 Thumbs.db

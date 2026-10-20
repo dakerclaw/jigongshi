@@ -6,15 +6,31 @@
  * ------------------------------------------------------------------ */
 
 const LIST = [
-  { path: '/pages/record/record', text: '记工时', icon: '⏰' },
-  { path: '/pages/month/month', text: '月度记录', icon: '📅' },
-  { path: '/pages/history/history', text: '历史查询', icon: '🔍' },
+  {
+    path: '/pages/record/record',
+    text: '记工时',
+    icon: '/assets/tab-record.png',
+    iconActive: '/assets/tab-record-active.png',
+  },
+  {
+    path: '/pages/month/month',
+    text: '月度记录',
+    icon: '/assets/tab-month.png',
+    iconActive: '/assets/tab-month-active.png',
+  },
+  {
+    path: '/pages/history/history',
+    text: '历史查询',
+    icon: '/assets/tab-history.png',
+    iconActive: '/assets/tab-history-active.png',
+  },
 ];
 
 Component({
   data: {
     list: LIST,
     selected: 0,
+    hidden: false,
   },
   methods: {
     onSwitch(e) {

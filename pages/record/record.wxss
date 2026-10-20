@@ -6,7 +6,7 @@
  * ------------------------------------------------------------------ */
 
 .page {
-  padding-bottom: 220rpx;
+  padding-bottom: calc(220rpx + env(safe-area-inset-bottom));
   min-height: 100vh;
 }
 
@@ -23,7 +23,7 @@
 
 .shift-card__label {
   font-size: 32rpx;
-  color: #8a94a6;
+  color: #667085;
   margin-bottom: 12rpx;
 }
 
@@ -102,7 +102,7 @@
 .hint {
   text-align: center;
   font-size: 34rpx;
-  color: #8a94a6;
+  color: #667085;
   line-height: 1.7;
   margin-bottom: 20rpx;
 }
@@ -134,6 +134,17 @@
   color: #0052d9;
 }
 
+.pending-alert {
+  margin: -8rpx 0 20rpx;
+  padding: 14rpx 20rpx;
+  border-radius: 12rpx;
+  background: #fff7e8;
+  color: #b25e09;
+  font-size: 30rpx;
+  line-height: 1.5;
+  text-align: center;
+}
+
 /* ---------------- 今日记录 ---------------- */
 .list-head {
   display: flex;
@@ -151,6 +162,40 @@
   font-size: 40rpx;
   color: #0052d9;
   margin: 0 6rpx;
+}
+
+.list-head__cross {
+  display: inline-block;
+  margin-right: 10rpx;
+  padding: 0 10rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #5b4bd6;
+  background: #efedfd;
+  vertical-align: middle;
+}
+
+/* 删除撤销条 */
+.undo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8rpx 0 4rpx;
+  padding: 14rpx 20rpx;
+  border-radius: 12rpx;
+  background: #f2f4f7;
+}
+.undo-bar__text {
+  font-size: 30rpx;
+  color: #4e5969;
+}
+.undo-bar__btn {
+  padding: 6rpx 20rpx;
+  border-radius: 10rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #0052d9;
+  background: #e7f0ff;
 }
 
 .rec-item {
@@ -189,10 +234,15 @@
   font-weight: 600;
   color: #4e5969;
 }
+.rec-item__date {
+  margin-top: 2rpx;
+  font-size: 26rpx;
+  color: #667085;
+}
 .rec-item__time {
   margin-top: 2rpx;
   font-size: 30rpx;
-  color: #8a94a6;
+  color: #667085;
 }
 .rec-item__hours {
   color: #1a1a1a;
@@ -208,7 +258,7 @@
 }
 .rec-item__units {
   font-size: 30rpx;
-  color: #8a94a6;
+  color: #667085;
   margin-top: 2rpx;
 }
 .rec-item__tag {
@@ -288,6 +338,15 @@
   border-radius: 12rpx;
   padding: 12rpx 20rpx;
   margin-bottom: 12rpx;
+}
+
+.about-link {
+  margin: 12rpx 24rpx 0;
+  padding: 18rpx 0;
+  text-align: center;
+  font-size: 30rpx;
+  color: #667085;
+  text-decoration: underline;
 }
 
 .foot-space {

@@ -5,6 +5,10 @@
  * 详见项目根目录 LICENSE 文件。
  * ------------------------------------------------------------------ */
 
+.tabbar--hidden {
+  visibility: hidden;
+}
+
 .tabbar {
   position: fixed;
   left: 0;
@@ -33,10 +37,8 @@
 }
 
 .tabbar__icon {
-  font-size: 52rpx;
-  line-height: 1.1;
-  filter: grayscale(100%);
-  opacity: 0.55;
+  width: 48rpx;
+  height: 48rpx;
 }
 
 .tabbar__text {
@@ -44,11 +46,6 @@
   font-size: 32rpx;
   color: #7a7a7a;
   line-height: 1.2;
-}
-
-.tabbar__item.is-active .tabbar__icon {
-  filter: none;
-  opacity: 1;
 }
 
 .tabbar__item.is-active .tabbar__text {

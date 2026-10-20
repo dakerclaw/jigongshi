@@ -6,31 +6,34 @@
  * ------------------------------------------------------------------ */
 
 const store = require('./utils/store.js');
+const shiftUtil = require('./utils/shift.js');
 
 App({
   globalData: {
+    version: '1.1.0',
     // 默认班制：'12h' | '8h'
-    shiftType: '12h',
+    shiftType: shiftUtil.DEFAULT_TYPE,
     // 默认班次：白班 / 中班 / 夜班
     shift: '白班',
-    // 是否已经完成过首次班制选择
-    shiftSetted: false,
   },
 
   onLaunch() {
+    this.reloadConfig();
+  },
+
+  /** 从 Storage 重新加载默认班制（导入备份后也会调用） */
+  reloadConfig() {
     const cfg = store.getConfig();
-    if (cfg && cfg.shiftType && cfg.shift) {
+    if (cfg && shiftUtil.isValidType(cfg.shiftType) && shiftUtil.isValidShift(cfg.shiftType, cfg.shift)) {
       this.globalData.shiftType = cfg.shiftType;
       this.globalData.shift = cfg.shift;
-      this.globalData.shiftSetted = true;
     }
   },
 
-  // 保存默认班制（供首页调用）
+  // 保存默认班制（供首页调用），返回是否写入成功
   saveDefaultShift(shiftType, shift) {
     this.globalData.shiftType = shiftType;
     this.globalData.shift = shift;
-    this.globalData.shiftSetted = true;
-    store.saveConfig({ shiftType, shift, setted: true });
+    return store.saveConfig({ shiftType: shiftType, shift: shift });
   },
 });

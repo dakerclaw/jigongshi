@@ -2,7 +2,8 @@
   "pages": [
     "pages/record/record",
     "pages/month/month",
-    "pages/history/history"
+    "pages/history/history",
+    "pages/about/about"
   ],
   "window": {
     "navigationBarTitleText": "",
