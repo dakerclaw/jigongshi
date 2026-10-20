@@ -72,7 +72,7 @@ const shiftUtil = require(path.join(ROOT, 'utils/shift.js'));
 const stats = require(path.join(ROOT, 'utils/stats.js'));
 
 const app = {
-  globalData: { version: '1.1.1', shiftType: '12h', shift: '白班' },
+  globalData: { version: '1.1.2', shiftType: '12h', shift: '白班' },
   saveDefaultShift(type, shift) {
     this.globalData.shiftType = type;
     this.globalData.shift = shift;
@@ -398,6 +398,85 @@ test('旧跨天记录（endDate 跨天但 crossDay=false）仍显示在今日', 
   page.onHide();
 });
 
+test('8 小时班制超过 10 小时自动下班，按 8 小时记录', () => {
+  resetStorage();
+  seedConfig('8h', '白班');
+  setNow('2026-10-20T08:00:00');
+  const page = makePage('pages/record/record.js');
+  page.onLoad();
+  store.setPending({
+    date: '2026-10-20',
+    startTime: '08:00',
+    startTs: new RealDate('2026-10-20T08:00:00').getTime(),
+    shiftType: '8h',
+    shift: '白班',
+  });
+
+  // 还没超过 10 小时，不自动下班
+  setNow('2026-10-20T17:59:59');
+  page.onShow();
+  assert.strictEqual(store.getRecords().length, 0);
+  assert(store.getPending());
+
+  // 正好 10 小时仍不触发，必须超过
+  setNow('2026-10-20T18:00:00');
+  page.updateClock();
+  assert.strictEqual(store.getRecords().length, 0);
+  assert(store.getPending());
+
+  // 超过 10 小时后自动按 8 小时补记，结束时间为 16:00
+  setNow('2026-10-20T18:00:01');
+  page.updateClock();
+  const recs = store.getRecords();
+  assert.strictEqual(recs.length, 1);
+  assert.strictEqual(recs[0].hours, 8);
+  assert.strictEqual(recs[0].minutes, 480);
+  assert.strictEqual(recs[0].endTime, '16:00');
+  assert.strictEqual(recs[0].endDate, '2026-10-20');
+  assert.strictEqual(recs[0].autoClockOut, true);
+  assert.strictEqual(store.getPending(), null);
+  page.onHide();
+});
+
+test('12 小时班制超过 14 小时自动下班，按 12 小时跨天记录', () => {
+  resetStorage();
+  seedConfig('12h', '夜班');
+  setNow('2026-10-20T20:00:00');
+  const page = makePage('pages/record/record.js');
+  page.onLoad();
+  store.setPending({
+    date: '2026-10-20',
+    startTime: '20:00',
+    startTs: new RealDate('2026-10-20T20:00:00').getTime(),
+    shiftType: '12h',
+    shift: '夜班',
+  });
+
+  setNow('2026-10-21T09:59:59');
+  page.onShow();
+  assert.strictEqual(store.getRecords().length, 0);
+  assert(store.getPending());
+
+  // 正好 14 小时仍不触发
+  setNow('2026-10-21T10:00:00');
+  page.updateClock();
+  assert.strictEqual(store.getRecords().length, 0);
+  assert(store.getPending());
+
+  setNow('2026-10-21T10:00:01');
+  page.updateClock();
+  const recs = store.getRecords();
+  assert.strictEqual(recs.length, 1);
+  assert.strictEqual(recs[0].hours, 12);
+  assert.strictEqual(recs[0].minutes, 720);
+  assert.strictEqual(recs[0].endTime, '08:00');
+  assert.strictEqual(recs[0].endDate, '2026-10-21');
+  assert.strictEqual(recs[0].crossDay, true);
+  assert.strictEqual(recs[0].autoClockOut, true);
+  assert.strictEqual(store.getPending(), null);
+  page.onHide();
+});
+
 test('首页保存失败时不弹成功结果，pending 保留', () => {
   resetStorage();
   seedConfig();
@@ -561,7 +640,7 @@ test('关于页：导出、清空、版本号', () => {
   const page = makePage('pages/about/about.js');
   page.onLoad();
   page.onShow();
-  assert.strictEqual(page.data.version, '1.1.1');
+  assert.strictEqual(page.data.version, '1.1.2');
   assert.strictEqual(page.data.recordCount, 1);
 
   clipboard = '';

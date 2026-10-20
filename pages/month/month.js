@@ -158,6 +158,8 @@ Page({
     let totalHours = 0;
     const records = recs.map((r) => {
       const hours = Number(r.hours) || 0;
+      const isCross = !!r.crossDay || (r.endDate && r.endDate !== r.date);
+      const isAuto = !!r.autoClockOut;
       totalHours += hours;
       return {
         id: r.id,
@@ -165,7 +167,11 @@ Page({
         theme: shiftUtil.themeOf(r.shift),
         timeText:
           r.mode === 'time'
-            ? (r.startTime || '--:--') + ' - ' + (r.endTime || '--:--') + (r.crossDay ? '（跨天）' : '')
+            ? (r.startTime || '--:--') +
+              ' - ' +
+              (r.endTime || '--:--') +
+              (isCross ? '（跨天）' : '') +
+              (isAuto ? '（自动）' : '')
             : '直接记录 ' + hours + ' 小时',
         hours: hours,
         capped: !!r.capped,
@@ -387,6 +393,7 @@ Page({
           capped: false,
           units: time.hoursToUnits(h),
           crossDay: false,
+          autoClockOut: false,
         },
         date,
       );
@@ -420,6 +427,7 @@ Page({
       capped: r.capped,
       units: r.units,
       crossDay: cross,
+      autoClockOut: false,
     };
 
     const save = () => this.commitRecordEdit(patch, date);

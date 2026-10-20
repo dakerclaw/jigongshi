@@ -69,7 +69,7 @@
         </view>
       </view>
       <view class="pending-alert" wx:if="{{pendingAlert}}">
-        已上班超过 16 小时，若忘记下班请及时处理
+        自动下班未成功，请检查存储空间或手动下班
       </view>
       <view class="big-btn big-btn--primary" bindtap="onClockOut">下 班 打 卡</view>
       <view class="big-btn big-btn--gray mt-24" bindtap="onCancelClock">取消本次上班</view>

@@ -88,6 +88,8 @@ Page({
   },
 
   onShow() {
+    // 每次回到前台都允许重试自动下班（上次可能因存储失败未完成）
+    this.autoFailedTs = null;
     // 弹层/首次设置打开时保持 tabBar 隐藏，避免从后台返回后误触
     setTabBarHidden(this, !!(this.data.showShiftPicker || this.data.result.visible));
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
@@ -143,14 +145,111 @@ Page({
 
     const p = this.data.pending;
     if (p && p.startTs) {
-      const diff = Math.floor((Date.now() - p.startTs) / 60000);
+      const diff = Math.floor((n.ts - Number(p.startTs)) / 60000);
       data.pendingElapsed = time.durationText(diff > 0 ? diff : 0);
-      data.pendingAlert = diff > 16 * 60;
+      // 只有自动下班失败时才保留警示；正常情况下不显示
+      data.pendingAlert = !!this.data.pendingAlert;
     } else {
       data.pendingElapsed = '0分钟';
       data.pendingAlert = false;
     }
     this.setData(data);
+
+    // 超过「班制上限 + 2 小时」仍未下班，自动按上限补记一条下班记录
+    if (p && p.startTs) this.autoClockOutIfNeeded(p, n.ts);
+  },
+
+  /**
+   * 自动下班：
+   * 8 小时班制超过 10 小时、12 小时班制超过 14 小时，视为忘记下班，
+   * 按班制上限补记一条打卡记录（8 / 12 小时），结束时间按「上班时间 + 上限」推算。
+   */
+  autoClockOutIfNeeded(p, nowTs) {
+    if (!p || !p.startTs) return false;
+    const startTs = Number(p.startTs);
+    if (!startTs) return false;
+
+    // 旧数据班制异常时按 8 小时保守处理
+    const shiftType = shiftUtil.isValidType(p.shiftType) ? p.shiftType : '8h';
+    const cap = shiftUtil.maxHoursOf(shiftType);
+    const thresholdMs = shiftUtil.missedHoursOf(shiftType) * 60 * 60 * 1000;
+    if (nowTs - startTs <= thresholdMs) return false;
+    if (this.autoFailedTs === startTs) return false;
+
+    const startInfo = time.toInfo(new Date(startTs));
+    const endTs = startTs + cap * 60 * 60 * 1000;
+    const endInfo = time.toInfo(new Date(endTs));
+    const date = p.date || startInfo.ymd;
+    const startTime = p.startTime || startInfo.hm;
+    const shift = shiftUtil.isValidShift(shiftType, p.shift || this.data.shift)
+      ? p.shift || this.data.shift
+      : shiftUtil.shiftsOf(shiftType)[0];
+
+    // 上次记录已写入但 pending 清理失败：只补清理，避免重复记录
+    const existing = store
+      .getRecords()
+      .find((r) => r && Number(r.startTs) === startTs);
+    if (existing) {
+      if (!store.clearPending()) {
+        this.markAutoFailed(startTs);
+        return true;
+      }
+      this.setData({
+        pending: null,
+        pendingElapsed: '0分钟',
+        pendingAlert: false,
+        pendingShiftTypeLabel: '',
+      });
+      this.refreshToday();
+      toast('已自动下班，按 ' + cap + ' 小时记录');
+      return true;
+    }
+
+    const rec = {
+      date: date,
+      endDate: endInfo.ymd,
+      shiftType: shiftType,
+      shift: shift,
+      mode: 'time',
+      startTime: startTime,
+      endTime: endInfo.hm,
+      minutes: cap * 60,
+      rawHours: cap,
+      hours: cap,
+      cap: cap,
+      capped: false,
+      units: time.hoursToUnits(cap),
+      crossDay: date !== endInfo.ymd,
+      autoClockOut: true,
+      startTs: startTs,
+    };
+
+    if (!store.addRecord(rec)) {
+      this.markAutoFailed(startTs);
+      toast('自动下班记录失败，请检查微信存储空间');
+      return true;
+    }
+
+    const cleared = store.clearPending();
+    this.refreshToday();
+    if (!cleared) {
+      this.markAutoFailed(startTs);
+      toast('已自动记录，但打卡状态清理失败，请勿重复下班');
+      return true;
+    }
+    this.setData({
+      pending: null,
+      pendingElapsed: '0分钟',
+      pendingAlert: false,
+      pendingShiftTypeLabel: '',
+    });
+    toast('已自动下班，按 ' + cap + ' 小时记录');
+    return true;
+  },
+
+  markAutoFailed(startTs) {
+    this.autoFailedTs = startTs;
+    this.setData({ pendingAlert: true });
   },
 
   /* ---------------- 班制 ---------------- */
@@ -262,6 +361,7 @@ Page({
       return;
     }
     haptic();
+    this.autoFailedTs = null;
     this.setData({
       pending: p,
       pendingElapsed: '0分钟',
@@ -282,6 +382,7 @@ Page({
           toast('取消失败，请检查微信存储空间');
           return;
         }
+        this.autoFailedTs = null;
         this.setData({ pending: null, pendingElapsed: '0分钟', pendingAlert: false, pendingShiftTypeLabel: '' });
         toast('已取消本次上班打卡');
       },
@@ -294,6 +395,27 @@ Page({
       toast('还没有上班打卡');
       return;
     }
+
+    // 自动记录已写入但 pending 清理失败时，手动下班只做清理，避免重复记录
+    const autoRecord = store
+      .getRecords()
+      .find((r) => r && Number(r.startTs) === Number(p.startTs));
+    if (autoRecord) {
+      if (!store.clearPending()) {
+        toast('打卡状态清理失败，请检查微信存储空间');
+        return;
+      }
+      this.setData({
+        pending: null,
+        pendingElapsed: '0分钟',
+        pendingAlert: false,
+        pendingShiftTypeLabel: '',
+      });
+      this.refreshToday();
+      toast('本次上班已记录，按 ' + autoRecord.hours + ' 小时');
+      return;
+    }
+
     const n = time.now();
     // 计酬上限按「上班打卡时所属班制」计算
     const cap = shiftUtil.maxHoursOf(p.shiftType || this.data.shiftType);
@@ -455,15 +577,20 @@ Page({
     const mapped = list.map((r) => {
       const hours = Number(r.hours) || 0;
       const isCross = !!r.crossDay || (r.endDate && r.endDate !== r.date);
+      const isAuto = !!r.autoClockOut;
       sum += hours;
       return {
         id: r.id,
         shift: r.shift || '未标注班次',
         theme: shiftUtil.themeOf(r.shift),
-        typeLabel: r.mode === 'hours' ? '工时记录' : '打卡记录',
+        typeLabel: isAuto ? '自动下班' : r.mode === 'hours' ? '工时记录' : '打卡记录',
         timeText:
           r.mode === 'time'
-            ? (r.startTime || '--:--') + ' - ' + (r.endTime || '--:--') + (isCross ? '（跨天）' : '')
+            ? (r.startTime || '--:--') +
+              ' - ' +
+              (r.endTime || '--:--') +
+              (isCross ? '（跨天）' : '') +
+              (isAuto ? '（自动）' : '')
             : '',
         dateLabel: r.date !== day ? time.mdText(r.date) : '',
         hours: hours,

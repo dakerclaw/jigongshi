@@ -50,6 +50,13 @@ function maxHoursOf(type) {
   return MAX_HOURS[type] || MAX_HOURS[SAFE_TYPE];
 }
 
+/** 超过「班制上限 + 2 小时」视为忘记下班：8h 班制 10h，12h 班制 14h */
+const MISSED_EXTRA_HOURS = 2;
+
+function missedHoursOf(type) {
+  return maxHoursOf(type) + MISSED_EXTRA_HOURS;
+}
+
 /** 班次 -> 样式后缀（day / mid / night） */
 function themeOf(shift) {
   if (shift === '夜班') return 'night';
@@ -68,6 +75,7 @@ module.exports = {
   isValidShift,
   themeOf,
   maxHoursOf,
+  missedHoursOf,
   HOUR_OPTIONS,
   DEFAULT_TYPE,
 };
