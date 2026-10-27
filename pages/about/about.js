@@ -13,7 +13,7 @@ const app = getApp();
 
 Page({
   data: {
-    version: '1.1.2',
+    version: '1.1.3',
     recordCount: 0,
     monthCount: 0,
     pendingText: '无',
@@ -21,7 +21,7 @@ Page({
   },
 
   onLoad() {
-    this.setData({ version: app.globalData.version || '1.1.2' });
+    this.setData({ version: app.globalData.version || '1.1.3' });
   },
 
   onShow() {

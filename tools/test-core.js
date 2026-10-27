@@ -72,7 +72,7 @@ const shiftUtil = require(path.join(ROOT, 'utils/shift.js'));
 const stats = require(path.join(ROOT, 'utils/stats.js'));
 
 const app = {
-  globalData: { version: '1.1.2', shiftType: '12h', shift: '白班' },
+  globalData: { version: '1.1.3', shiftType: '12h', shift: '白班' },
   saveDefaultShift(type, shift) {
     this.globalData.shiftType = type;
     this.globalData.shift = shift;
@@ -398,7 +398,7 @@ test('旧跨天记录（endDate 跨天但 crossDay=false）仍显示在今日', 
   page.onHide();
 });
 
-test('8 小时班制超过 10 小时自动下班，按 8 小时记录', () => {
+test('8 小时班制超过 10 小时自动下班，下班记 10 小时、计酬 8 小时', () => {
   resetStorage();
   seedConfig('8h', '白班');
   setNow('2026-10-20T08:00:00');
@@ -424,21 +424,23 @@ test('8 小时班制超过 10 小时自动下班，按 8 小时记录', () => {
   assert.strictEqual(store.getRecords().length, 0);
   assert(store.getPending());
 
-  // 超过 10 小时后自动按 8 小时补记，结束时间为 16:00
+  // 超过 10 小时后自动补记，下班时间 = 上班 + 10 小时 = 18:00，计酬仍为 8 小时
   setNow('2026-10-20T18:00:01');
   page.updateClock();
   const recs = store.getRecords();
   assert.strictEqual(recs.length, 1);
   assert.strictEqual(recs[0].hours, 8);
-  assert.strictEqual(recs[0].minutes, 480);
-  assert.strictEqual(recs[0].endTime, '16:00');
+  assert.strictEqual(recs[0].minutes, 600);
+  assert.strictEqual(recs[0].rawHours, 10);
+  assert.strictEqual(recs[0].capped, true);
+  assert.strictEqual(recs[0].endTime, '18:00');
   assert.strictEqual(recs[0].endDate, '2026-10-20');
   assert.strictEqual(recs[0].autoClockOut, true);
   assert.strictEqual(store.getPending(), null);
   page.onHide();
 });
 
-test('12 小时班制超过 14 小时自动下班，按 12 小时跨天记录', () => {
+test('12 小时班制超过 14 小时自动下班，下班记 14 小时、计酬 12 小时', () => {
   resetStorage();
   seedConfig('12h', '夜班');
   setNow('2026-10-20T20:00:00');
@@ -468,8 +470,10 @@ test('12 小时班制超过 14 小时自动下班，按 12 小时跨天记录', 
   const recs = store.getRecords();
   assert.strictEqual(recs.length, 1);
   assert.strictEqual(recs[0].hours, 12);
-  assert.strictEqual(recs[0].minutes, 720);
-  assert.strictEqual(recs[0].endTime, '08:00');
+  assert.strictEqual(recs[0].minutes, 840);
+  assert.strictEqual(recs[0].rawHours, 14);
+  assert.strictEqual(recs[0].capped, true);
+  assert.strictEqual(recs[0].endTime, '10:00');
   assert.strictEqual(recs[0].endDate, '2026-10-21');
   assert.strictEqual(recs[0].crossDay, true);
   assert.strictEqual(recs[0].autoClockOut, true);
@@ -640,7 +644,7 @@ test('关于页：导出、清空、版本号', () => {
   const page = makePage('pages/about/about.js');
   page.onLoad();
   page.onShow();
-  assert.strictEqual(page.data.version, '1.1.2');
+  assert.strictEqual(page.data.version, '1.1.3');
   assert.strictEqual(page.data.recordCount, 1);
 
   clipboard = '';

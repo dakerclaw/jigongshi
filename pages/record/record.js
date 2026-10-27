@@ -162,7 +162,8 @@ Page({
   /**
    * 自动下班：
    * 8 小时班制超过 10 小时、12 小时班制超过 14 小时，视为忘记下班，
-   * 按班制上限补记一条打卡记录（8 / 12 小时），结束时间按「上班时间 + 上限」推算。
+   * 结束时间按「上班时间 + 超时阈值（10 / 14 小时）」推算，
+   * 计酬仍按班制上限（8 / 12 小时）封顶。
    */
   autoClockOutIfNeeded(p, nowTs) {
     if (!p || !p.startTs) return false;
@@ -172,12 +173,13 @@ Page({
     // 旧数据班制异常时按 8 小时保守处理
     const shiftType = shiftUtil.isValidType(p.shiftType) ? p.shiftType : '8h';
     const cap = shiftUtil.maxHoursOf(shiftType);
-    const thresholdMs = shiftUtil.missedHoursOf(shiftType) * 60 * 60 * 1000;
+    const thresholdHours = shiftUtil.missedHoursOf(shiftType);
+    const thresholdMs = thresholdHours * 60 * 60 * 1000;
     if (nowTs - startTs <= thresholdMs) return false;
     if (this.autoFailedTs === startTs) return false;
 
     const startInfo = time.toInfo(new Date(startTs));
-    const endTs = startTs + cap * 60 * 60 * 1000;
+    const endTs = startTs + thresholdMs;
     const endInfo = time.toInfo(new Date(endTs));
     const date = p.date || startInfo.ymd;
     const startTime = p.startTime || startInfo.hm;
@@ -213,11 +215,11 @@ Page({
       mode: 'time',
       startTime: startTime,
       endTime: endInfo.hm,
-      minutes: cap * 60,
-      rawHours: cap,
+      minutes: thresholdHours * 60,
+      rawHours: thresholdHours,
       hours: cap,
       cap: cap,
-      capped: false,
+      capped: true,
       units: time.hoursToUnits(cap),
       crossDay: date !== endInfo.ymd,
       autoClockOut: true,
