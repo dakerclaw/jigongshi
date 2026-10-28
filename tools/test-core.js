@@ -72,7 +72,7 @@ const shiftUtil = require(path.join(ROOT, 'utils/shift.js'));
 const stats = require(path.join(ROOT, 'utils/stats.js'));
 
 const app = {
-  globalData: { version: '1.1.3', shiftType: '12h', shift: '白班' },
+  globalData: { version: '1.1.4', shiftType: '12h', shift: '白班' },
   saveDefaultShift(type, shift) {
     this.globalData.shiftType = type;
     this.globalData.shift = shift;
@@ -644,7 +644,7 @@ test('关于页：导出、清空、版本号', () => {
   const page = makePage('pages/about/about.js');
   page.onLoad();
   page.onShow();
-  assert.strictEqual(page.data.version, '1.1.3');
+  assert.strictEqual(page.data.version, '1.1.4');
   assert.strictEqual(page.data.recordCount, 1);
 
   clipboard = '';
@@ -652,6 +652,8 @@ test('关于页：导出、清空、版本号', () => {
   const backup = JSON.parse(clipboard);
   assert.strictEqual(backup.app, 'jigongshi');
   assert.strictEqual(backup.records.length, 1);
+  assert(clipboard.indexOf('\n  "app"') >= 0);
+  assert(clipboard.split('\n').length > 5);
 
   modals.length = 0;
   page.onClearRecords();

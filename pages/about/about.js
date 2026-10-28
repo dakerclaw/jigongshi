@@ -13,7 +13,7 @@ const app = getApp();
 
 Page({
   data: {
-    version: '1.1.3',
+    version: '1.1.4',
     recordCount: 0,
     monthCount: 0,
     pendingText: '无',
@@ -21,7 +21,7 @@ Page({
   },
 
   onLoad() {
-    this.setData({ version: app.globalData.version || '1.1.3' });
+    this.setData({ version: app.globalData.version || '1.1.4' });
   },
 
   onShow() {
@@ -50,7 +50,8 @@ Page({
   onExport() {
     const data = store.exportData();
     wx.setClipboardData({
-      data: JSON.stringify(data),
+      // 两空格缩进，保证复制到备忘录/编辑器后仍然易读
+      data: JSON.stringify(data, null, 2) + '\n',
       success: () => {
         // 微信会提示「内容已复制」；这里再给一条更明确的操作说明
         wx.showToast({ title: '备份 JSON 已复制，请粘贴保存', icon: 'none', duration: 2600 });
