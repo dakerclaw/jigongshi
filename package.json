@@ -1,6 +1,6 @@
 {
   "name": "jigongshi",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "description": "出勤轻松记：纯本地工时记录微信小程序",
   "main": "app.js",
   "scripts": {

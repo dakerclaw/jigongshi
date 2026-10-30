@@ -96,15 +96,14 @@
 .table__head {
   display: flex;
   background: #f2f4f7;
-  height: 96rpx;
-  line-height: 96rpx;
+  padding: 6rpx 0;
 }
 .table__th {
   font-size: 36rpx;
   font-weight: 700;
   color: #1a1a1a;
   text-align: center;
-  padding: 0 var(--pad-block);
+  padding: 6rpx var(--pad-block);
 }
 .table__sort {
   font-size: 28rpx;
@@ -133,8 +132,11 @@
 .table__row--odd {
   background: #fafbfc;
 }
+.table__row:first-of-type {
+  border-top: none;
+}
 .table__td {
-  padding: 14rpx var(--pad-block);
+  padding: 6rpx var(--pad-block);
   text-align: center;
 }
 .table__md {
@@ -273,7 +275,7 @@
 /* 编辑单条 / 补记卡片 */
 .rec-edit {
   margin-top: 20rpx;
-  padding: 20rpx var(--pad-block);
+  padding: 10rpx var(--pad-block);
   background: #f7f9fc;
   border: 2rpx solid #e3e6eb;
   border-radius: 16rpx;

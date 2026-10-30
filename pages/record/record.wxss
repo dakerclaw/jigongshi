@@ -112,7 +112,7 @@
   background: #f7f9fc;
   border: 2rpx solid #e3e6eb;
   border-radius: 16rpx;
-  padding: 20rpx var(--pad-block);
+  padding: 10rpx var(--pad-block);
   margin-bottom: 24rpx;
 }
 .pending-row {
