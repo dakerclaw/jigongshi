@@ -51,8 +51,6 @@ Page({
     hourOptions: shiftUtil.HOUR_OPTIONS,
     addShifts: [],
     addShift: '',
-    addHour: 0,
-    addUnits: '0.00',
     recordEdit: emptyRecordEdit(),
   },
 
@@ -200,8 +198,6 @@ Page({
       },
       addShifts: addShifts,
       addShift: addShift,
-      addHour: 0,
-      addUnits: '0.00',
       recordEdit: emptyRecordEdit(),
     });
     setTabBarHidden(this, true);
@@ -220,19 +216,28 @@ Page({
 
   onPickAddHour(e) {
     const h = Number(e.currentTarget.dataset.hour);
-    this.setData({
-      addHour: h,
-      addUnits: time.hoursToUnits(h).toFixed(2),
+    if (!h) return;
+    const { addShift, daySheet } = this.data;
+    const date = daySheet.date;
+    const units = time.hoursToUnits(h);
+    confirmDialog({
+      title: '补记提醒',
+      content:
+        time.mdText(date) +
+        ' · ' +
+        addShift +
+        '\n补记 ' +
+        h +
+        ' 小时（折合 ' +
+        units.toFixed(2) +
+        ' 工时）',
+      confirmText: '确认补记',
+      cancelText: '取消',
+      onConfirm: () => this.saveAdd(date, addShift, h),
     });
   },
 
-  onSaveAdd() {
-    const { addHour, addShift, daySheet } = this.data;
-    if (!addHour) {
-      toast('请先选择补记的小时数');
-      return;
-    }
-    const date = daySheet.date;
+  saveAdd(date, addShift, h) {
     const saved = store.addRecord({
       date: date,
       endDate: date,
@@ -241,12 +246,12 @@ Page({
       mode: 'hours',
       startTime: '',
       endTime: '',
-      minutes: addHour * 60,
-      rawHours: addHour,
-      hours: addHour,
+      minutes: h * 60,
+      rawHours: h,
+      hours: h,
       cap: 0,
       capped: false,
-      units: time.hoursToUnits(addHour),
+      units: time.hoursToUnits(h),
       crossDay: false,
     });
     if (!saved) {
@@ -256,7 +261,7 @@ Page({
     haptic();
     this.load(this.data.ym);
     this.openDaySheet(date);
-    toast('已补记 ' + time.mdText(date) + ' ' + addShift + ' ' + addHour + ' 小时');
+    toast('已补记 ' + time.mdText(date) + ' ' + addShift + ' ' + h + ' 小时');
   },
 
   /* ---------------- 编辑单条记录 ---------------- */

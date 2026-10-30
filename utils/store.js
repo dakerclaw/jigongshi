@@ -14,9 +14,30 @@
 const time = require('./time.js');
 const shiftUtil = require('./shift.js');
 
-const KEY_RECORDS = 'JG_RECORDS'; // 全部出勤记录
-const KEY_CONFIG = 'JG_CONFIG'; // 默认班制配置
-const KEY_PENDING = 'JG_PENDING'; // 已上班、未下班
+/**
+ * 微信开发版/体验版/正式版共用同一份本地 Storage，必须用 key 前缀隔离，
+ * 避免测试版写入或清空数据时影响正式版。正式版继续使用旧 key，保证历史数据可读。
+ */
+const APP_ENV = (() => {
+  try {
+    if (typeof wx !== 'undefined' && typeof wx.getAccountInfoSync === 'function') {
+      const info = wx.getAccountInfoSync();
+      return (info && info.miniProgram && info.miniProgram.envVersion) || 'release';
+    }
+  } catch (e) {
+    // 基础库过低或接口异常时按正式版处理
+  }
+  return 'release';
+})();
+
+const ENV_KEY_PREFIX = APP_ENV === 'develop' ? 'DEV_' : APP_ENV === 'trial' ? 'TRIAL_' : '';
+const KEY_PREFIX = ENV_KEY_PREFIX ? 'JG_' + ENV_KEY_PREFIX : 'JG_';
+const KEY_RECORDS = KEY_PREFIX + 'RECORDS'; // 全部出勤记录
+const KEY_CONFIG = KEY_PREFIX + 'CONFIG'; // 默认班制配置
+const KEY_PENDING = KEY_PREFIX + 'PENDING'; // 已上班、未下班
+
+const LEGACY_KEY_RECORDS = 'JG_RECORDS';
+const LEGACY_KEY_CONFIG = 'JG_CONFIG';
 
 const BACKUP_APP = 'jigongshi';
 const BACKUP_VERSION = 1;
@@ -37,6 +58,31 @@ function safeSet(key, value) {
   } catch (e) {
     return false;
   }
+}
+
+/**
+ * 开发版/体验版首次运行时，把正式版当前数据复制一份作为初始快照。
+ * 只复制记录与班制，不复制 pending，避免测试版重复触发自动下班。
+ */
+function seedEnvStorage() {
+  if (!ENV_KEY_PREFIX) return;
+  if (safeGet(KEY_RECORDS, undefined) === undefined) {
+    const records = safeGet(LEGACY_KEY_RECORDS, undefined);
+    if (Array.isArray(records)) safeSet(KEY_RECORDS, records);
+  }
+  if (safeGet(KEY_CONFIG, undefined) === undefined) {
+    const config = safeGet(LEGACY_KEY_CONFIG, undefined);
+    if (config) safeSet(KEY_CONFIG, config);
+  }
+}
+
+seedEnvStorage();
+
+/** 当前本地数据所属的小程序版本，用于关于页提示 */
+function getStorageEnv() {
+  if (APP_ENV === 'develop') return { version: 'develop', label: '开发版', isolated: true };
+  if (APP_ENV === 'trial') return { version: 'trial', label: '体验版', isolated: true };
+  return { version: 'release', label: '正式版', isolated: false };
 }
 
 function genId() {
@@ -203,6 +249,7 @@ function clearAllRecords() {
 }
 
 module.exports = {
+  getStorageEnv,
   getRecords,
   getRecordById,
   addRecord,

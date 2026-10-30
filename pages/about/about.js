@@ -13,7 +13,8 @@ const app = getApp();
 
 Page({
   data: {
-    version: '1.1.4',
+    version: '1.1.6',
+    storageLabel: '正式版',
     recordCount: 0,
     monthCount: 0,
     pendingText: '无',
@@ -21,7 +22,11 @@ Page({
   },
 
   onLoad() {
-    this.setData({ version: app.globalData.version || '1.1.4' });
+    const storageEnv = store.getStorageEnv();
+    this.setData({
+      version: app.globalData.version || '1.1.6',
+      storageLabel: storageEnv.label,
+    });
   },
 
   onShow() {

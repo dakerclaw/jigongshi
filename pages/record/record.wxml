@@ -83,32 +83,12 @@
       <view
         wx:for="{{hourOptions}}"
         wx:key="*this"
-        class="hour-cell {{selectedHour === item ? 'is-active' : ''}}"
+        class="hour-cell"
         data-hour="{{item}}"
         bindtap="onSelectHour"
       >
         {{item}} 小时
       </view>
-    </view>
-
-    <view class="calc-box" wx:if="{{selectedHour}}">
-      <view class="calc-box__line">
-        <text class="calc-box__k">出勤时长</text>
-        <text class="calc-box__v num">{{selectedHour}} 小时</text>
-      </view>
-      <view class="calc-box__line">
-        <text class="calc-box__k">折合工时</text>
-        <text class="calc-box__v calc-box__v--big num">{{selectedUnits}}</text>
-        <text class="calc-box__unit">个</text>
-      </view>
-      <view class="calc-box__note">8 小时 = 1 个工时</view>
-    </view>
-
-    <view
-      class="big-btn {{selectedHour ? 'big-btn--primary' : 'big-btn--disabled'}}"
-      bindtap="onSaveHours"
-    >
-      保 存 记 录
     </view>
   </view>
 

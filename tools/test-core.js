@@ -72,7 +72,7 @@ const shiftUtil = require(path.join(ROOT, 'utils/shift.js'));
 const stats = require(path.join(ROOT, 'utils/stats.js'));
 
 const app = {
-  globalData: { version: '1.1.4', shiftType: '12h', shift: '白班' },
+  globalData: { version: '1.1.6', shiftType: '12h', shift: '白班' },
   saveDefaultShift(type, shift) {
     this.globalData.shiftType = type;
     this.globalData.shift = shift;
@@ -267,6 +267,40 @@ test('备份导出 / 导入 / 清空', () => {
   assert.strictEqual(store.getRecords().length, 1);
   assert.strictEqual(store.getConfig().shift, '中班');
   assert(store.getPending());
+});
+
+test('开发版使用独立 storage，写入/清空不影响正式版', () => {
+  resetStorage();
+  storage.JG_RECORDS = [{ id: 'legacy', date: '2026-10-20', hours: 8, minutes: 480, units: 1 }];
+  storage.JG_CONFIG = { shiftType: '8h', shift: '白班' };
+  wx.getAccountInfoSync = () => ({ miniProgram: { envVersion: 'develop' } });
+
+  const storePath = require.resolve(path.join(ROOT, 'utils/store.js'));
+  delete require.cache[storePath];
+  try {
+    const devStore = require(storePath);
+    assert.strictEqual(devStore.getStorageEnv().label, '开发版');
+    assert.strictEqual(devStore.getStorageEnv().isolated, true);
+    // 首次进入开发版时复制正式版快照
+    assert.strictEqual(devStore.getRecords().length, 1);
+    assert.strictEqual(devStore.getConfig().shift, '白班');
+
+    assert(devStore.addRecord({ date: '2026-10-21', hours: 2, minutes: 120, units: 0.25 }));
+    assert(devStore.setPending({ date: '2026-10-21', startTs: 1 }));
+    assert.strictEqual(storage.JG_DEV_RECORDS.length, 2);
+    assert.strictEqual(storage.JG_RECORDS.length, 1);
+    assert(storage.JG_DEV_PENDING);
+    assert.strictEqual(storage.JG_PENDING, undefined);
+
+    // 开发版清空只影响自己的 key
+    assert(devStore.clearAllRecords());
+    assert.strictEqual(devStore.getRecords().length, 0);
+    assert.strictEqual(storage.JG_RECORDS.length, 1);
+  } finally {
+    delete wx.getAccountInfoSync;
+    delete require.cache[storePath];
+    require(storePath);
+  }
 });
 
 /* ---------------- 统计口径 ---------------- */
@@ -481,17 +515,38 @@ test('12 小时班制超过 14 小时自动下班，下班记 14 小时、计酬
   page.onHide();
 });
 
-test('首页保存失败时不弹成功结果，pending 保留', () => {
+test('首页按工时点击小时弹出记录提醒，确认后保存', () => {
   resetStorage();
   seedConfig();
   setNow('2026-10-20T09:00:00');
   const page = makePage('pages/record/record.js');
   page.onLoad();
+  modals.length = 0;
   page.onSelectHour({ currentTarget: { dataset: { hour: 8 } } });
+  assert.strictEqual(store.getRecords().length, 0);
+  assert.strictEqual(modals.length, 1);
+  assert.strictEqual(modals[0].title, '记录提醒');
+  assert(modals[0].content.indexOf('8 小时') >= 0);
+  modals[0].success({ confirm: true });
+  assert.strictEqual(store.getRecords().length, 1);
+  assert.strictEqual(store.getRecords()[0].hours, 8);
+  page.onHide();
+});
+
+test('首页按工时保存失败时不提示成功', () => {
+  resetStorage();
+  seedConfig();
+  setNow('2026-10-20T09:00:00');
+  const page = makePage('pages/record/record.js');
+  page.onLoad();
+  modals.length = 0;
+  page.onSelectHour({ currentTarget: { dataset: { hour: 8 } } });
+  assert.strictEqual(modals.length, 1);
   failSet = true;
-  page.onSaveHours();
+  modals[0].success({ confirm: true });
   assert.strictEqual(store.getRecords().length, 0);
   assert.strictEqual(page.data.result.visible, false);
+  failSet = false;
   page.onHide();
 });
 
@@ -539,8 +594,12 @@ test('月度页：跨天/未来日期与单条编辑、补记', () => {
   assert.strictEqual(updated.hours, 8);
   assert.strictEqual(updated.startTime, '09:00');
 
+  modals.length = 0;
   page.onPickAddHour({ currentTarget: { dataset: { hour: 2 } } });
-  page.onSaveAdd();
+  assert.strictEqual(store.getRecordsByMonth('2026-10').length, 1);
+  assert.strictEqual(modals.length, 1);
+  assert.strictEqual(modals[0].title, '补记提醒');
+  modals[0].success({ confirm: true });
   assert.strictEqual(store.getRecordsByMonth('2026-10').length, 2);
   page.onHide();
 });
@@ -629,9 +688,11 @@ test('月度补记写入失败时不增加记录', () => {
   page.onLoad();
   page.onShow();
   page.openDaySheet('2026-10-20');
+  modals.length = 0;
   page.onPickAddHour({ currentTarget: { dataset: { hour: 2 } } });
+  assert.strictEqual(modals.length, 1);
   failSet = true;
-  page.onSaveAdd();
+  modals[0].success({ confirm: true });
   assert.strictEqual(store.getRecords().length, 0);
   failSet = false;
   page.onHide();
@@ -644,7 +705,8 @@ test('关于页：导出、清空、版本号', () => {
   const page = makePage('pages/about/about.js');
   page.onLoad();
   page.onShow();
-  assert.strictEqual(page.data.version, '1.1.4');
+  assert.strictEqual(page.data.version, '1.1.6');
+  assert.strictEqual(page.data.storageLabel, '正式版');
   assert.strictEqual(page.data.recordCount, 1);
 
   clipboard = '';

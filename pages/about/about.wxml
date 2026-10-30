@@ -9,7 +9,7 @@
   <view class="card about-hero">
     <view class="about-hero__icon">⏱️</view>
     <view class="about-hero__name">出勤轻松记</view>
-    <view class="about-hero__ver">版本 {{version}} · 纯本地运行</view>
+    <view class="about-hero__ver">版本 {{version}} · {{storageLabel}} · 纯本地运行</view>
     <view class="about-hero__desc">记录上下班与工时，自动折算工时个数</view>
   </view>
 
@@ -47,7 +47,7 @@
     <view class="privacy-item">· 不收集姓名、手机号、位置、通讯录等个人信息。</view>
     <view class="privacy-item">· 不接入广告、统计或第三方 SDK，不发起网络请求。</view>
     <view class="privacy-item">· 导出/导入由你主动触发，数据通过微信剪贴板在本机流转。</view>
-    <view class="privacy-item">· 卸载小程序或清理微信存储会删除本地数据，建议定期导出备份。</view>
+    <view class="privacy-item">· 开发版/体验版使用独立本地数据，不会覆盖正式版；删除小程序或清理微信存储会删除本机数据，请先导出备份。</view>
   </view>
 
   <view class="card">

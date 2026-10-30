@@ -38,8 +38,6 @@ Page({
 
     // 按工时记录
     hourOptions: shiftUtil.HOUR_OPTIONS,
-    selectedHour: 0,
-    selectedUnits: '0.00',
 
     // 今日记录
     todayRecords: [],
@@ -485,7 +483,6 @@ Page({
 
     const cleared = store.clearPending();
     haptic();
-    this.setData({ selectedHour: 0, selectedUnits: '0.00' });
     if (cleared) {
       this.setData({
         pending: null,
@@ -520,19 +517,27 @@ Page({
 
   onSelectHour(e) {
     const h = Number(e.currentTarget.dataset.hour);
-    this.setData({
-      selectedHour: h,
-      selectedUnits: time.hoursToUnits(h).toFixed(2),
+    if (!h) return;
+    const n = time.now();
+    const units = time.hoursToUnits(h);
+    confirmDialog({
+      title: '记录提醒',
+      content:
+        time.mdText(n.ymd) +
+        ' · ' +
+        this.data.shift +
+        '\n按工时记录 ' +
+        h +
+        ' 小时（折合 ' +
+        units.toFixed(2) +
+        ' 工时）',
+      confirmText: '确认记录',
+      cancelText: '取消',
+      onConfirm: () => this.saveHours(h, n),
     });
   },
 
-  onSaveHours() {
-    const h = this.data.selectedHour;
-    if (!h) {
-      toast('请先选择小时数');
-      return;
-    }
-    const n = time.now();
+  saveHours(h, n) {
     const units = time.hoursToUnits(h);
     const saved = store.addRecord({
       date: n.ymd,
@@ -555,14 +560,8 @@ Page({
       return;
     }
     haptic();
-    this.setData({ selectedHour: 0, selectedUnits: '0.00' });
     this.refreshToday();
-    this.showResult('记录成功', [
-      { k: '班　　次', v: this.data.shift + '（' + this.data.shiftTypeLabel + '）' },
-      { k: '日　　期', v: time.mdText(n.ymd) },
-      { k: '出勤时长', v: h + ' 小时' },
-      { k: '折合工时', v: units.toFixed(2) + ' 个' },
-    ]);
+    toast('已记录 ' + h + ' 小时');
   },
 
   /* ---------------- 今日记录 ---------------- */
