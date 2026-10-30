@@ -104,6 +104,7 @@
   font-weight: 700;
   color: #1a1a1a;
   text-align: center;
+  padding: 0 var(--pad-block);
 }
 .table__sort {
   font-size: 28rpx;
@@ -133,7 +134,7 @@
   background: #fafbfc;
 }
 .table__td {
-  padding: 14rpx 0;
+  padding: 14rpx var(--pad-block);
   text-align: center;
 }
 .table__md {
@@ -256,7 +257,7 @@
 }
 .day-sum {
   margin-top: 12rpx;
-  padding: 8rpx 20rpx;
+  padding: 8rpx var(--pad-block);
   background: #e7f0ff;
   border-radius: 14rpx;
   font-size: 36rpx;
@@ -272,7 +273,7 @@
 /* 编辑单条 / 补记卡片 */
 .rec-edit {
   margin-top: 20rpx;
-  padding: 20rpx;
+  padding: 20rpx var(--pad-block);
   background: #f7f9fc;
   border: 2rpx solid #e3e6eb;
   border-radius: 16rpx;
@@ -310,6 +311,7 @@
 .time-box {
   height: 96rpx;
   line-height: 96rpx;
+  padding: 0 var(--pad-block);
   text-align: center;
   font-size: 42rpx;
   font-weight: 700;

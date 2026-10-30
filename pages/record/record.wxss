@@ -112,7 +112,7 @@
   background: #f7f9fc;
   border: 2rpx solid #e3e6eb;
   border-radius: 16rpx;
-  padding: 20rpx 28rpx;
+  padding: 20rpx var(--pad-block);
   margin-bottom: 24rpx;
 }
 .pending-row {
@@ -136,7 +136,7 @@
 
 .pending-alert {
   margin: -8rpx 0 20rpx;
-  padding: 14rpx 20rpx;
+  padding: 14rpx var(--pad-block);
   border-radius: 12rpx;
   background: #fff7e8;
   color: #b25e09;
@@ -336,7 +336,7 @@
   color: #b25e09;
   background: #fff7e8;
   border-radius: 12rpx;
-  padding: 12rpx 20rpx;
+  padding: 12rpx var(--pad-block);
   margin-bottom: 12rpx;
 }
 
