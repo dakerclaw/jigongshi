@@ -75,7 +75,7 @@ const shiftUtil = require(path.join(ROOT, 'utils/shift.js'));
 const stats = require(path.join(ROOT, 'utils/stats.js'));
 
 const app = {
-  globalData: { version: '1.1.11', shiftType: '12h', shift: '白班' },
+  globalData: { version: '1.1.12', shiftType: '12h', shift: '白班' },
   saveDefaultShift(type, shift) {
     this.globalData.shiftType = type;
     this.globalData.shift = shift;
@@ -714,7 +714,7 @@ test('关于页：导出、清空、版本号', () => {
   const page = makePage('pages/about/about.js');
   page.onLoad();
   page.onShow();
-  assert.strictEqual(page.data.version, '1.1.11');
+  assert.strictEqual(page.data.version, '1.1.12');
   assert.strictEqual(page.data.storageLabel, '正式版');
   assert.strictEqual(page.data.recordCount, 1);
 

@@ -90,7 +90,10 @@
       </view>
     </view>
 
-    <view class="table__tip">点上面任意一天，可查看明细、编辑单条记录或补记工时</view>
+    <view class="table__tip">
+      <view>点上面任意一天，</view>
+      <view>可查看明细、编辑单条记录或补记工时</view>
+    </view>
   </view>
 
   <view class="foot-space"></view>
