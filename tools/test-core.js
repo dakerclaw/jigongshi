@@ -20,6 +20,7 @@ const toasts = [];
 const modals = [];
 let clipboard = '';
 let failSet = false;
+let vibrations = 0;
 
 function setNow(iso) {
   const fixed = new RealDate(iso);
@@ -62,7 +63,9 @@ global.wx = {
   getClipboardData(o) {
     o.success({ data: clipboard });
   },
-  vibrateShort() {},
+  vibrateShort() {
+    vibrations += 1;
+  },
   navigateTo() {},
 };
 
@@ -72,7 +75,7 @@ const shiftUtil = require(path.join(ROOT, 'utils/shift.js'));
 const stats = require(path.join(ROOT, 'utils/stats.js'));
 
 const app = {
-  globalData: { version: '1.1.6', shiftType: '12h', shift: '白班' },
+  globalData: { version: '1.1.7', shiftType: '12h', shift: '白班' },
   saveDefaultShift(type, shift) {
     this.globalData.shiftType = type;
     this.globalData.shift = shift;
@@ -527,9 +530,12 @@ test('首页按工时点击小时弹出记录提醒，确认后保存', () => {
   assert.strictEqual(modals.length, 1);
   assert.strictEqual(modals[0].title, '记录提醒');
   assert(modals[0].content.indexOf('8 小时') >= 0);
+  assert.strictEqual(modals[0].content.indexOf('折合'), -1);
+  vibrations = 0;
   modals[0].success({ confirm: true });
   assert.strictEqual(store.getRecords().length, 1);
   assert.strictEqual(store.getRecords()[0].hours, 8);
+  assert.strictEqual(vibrations, 0);
   page.onHide();
 });
 
@@ -599,8 +605,11 @@ test('月度页：跨天/未来日期与单条编辑、补记', () => {
   assert.strictEqual(store.getRecordsByMonth('2026-10').length, 1);
   assert.strictEqual(modals.length, 1);
   assert.strictEqual(modals[0].title, '补记提醒');
+  assert.strictEqual(modals[0].content.indexOf('折合'), -1);
+  vibrations = 0;
   modals[0].success({ confirm: true });
   assert.strictEqual(store.getRecordsByMonth('2026-10').length, 2);
+  assert.strictEqual(vibrations, 0);
   page.onHide();
 });
 
@@ -705,7 +714,7 @@ test('关于页：导出、清空、版本号', () => {
   const page = makePage('pages/about/about.js');
   page.onLoad();
   page.onShow();
-  assert.strictEqual(page.data.version, '1.1.6');
+  assert.strictEqual(page.data.version, '1.1.7');
   assert.strictEqual(page.data.storageLabel, '正式版');
   assert.strictEqual(page.data.recordCount, 1);
 

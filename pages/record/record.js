@@ -519,18 +519,9 @@ Page({
     const h = Number(e.currentTarget.dataset.hour);
     if (!h) return;
     const n = time.now();
-    const units = time.hoursToUnits(h);
     confirmDialog({
       title: '记录提醒',
-      content:
-        time.mdText(n.ymd) +
-        ' · ' +
-        this.data.shift +
-        '\n按工时记录 ' +
-        h +
-        ' 小时（折合 ' +
-        units.toFixed(2) +
-        ' 工时）',
+      content: time.mdText(n.ymd) + ' · ' + this.data.shift + '\n' + h + ' 小时',
       confirmText: '确认记录',
       cancelText: '取消',
       onConfirm: () => this.saveHours(h, n),
@@ -559,7 +550,6 @@ Page({
       toast('保存失败：本次记录未写入，请检查微信存储空间');
       return;
     }
-    haptic();
     this.refreshToday();
     toast('已记录 ' + h + ' 小时');
   },

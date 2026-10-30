@@ -219,18 +219,9 @@ Page({
     if (!h) return;
     const { addShift, daySheet } = this.data;
     const date = daySheet.date;
-    const units = time.hoursToUnits(h);
     confirmDialog({
       title: '补记提醒',
-      content:
-        time.mdText(date) +
-        ' · ' +
-        addShift +
-        '\n补记 ' +
-        h +
-        ' 小时（折合 ' +
-        units.toFixed(2) +
-        ' 工时）',
+      content: time.mdText(date) + ' · ' + addShift + '\n' + h + ' 小时',
       confirmText: '确认补记',
       cancelText: '取消',
       onConfirm: () => this.saveAdd(date, addShift, h),
@@ -258,7 +249,6 @@ Page({
       toast('补记失败，请检查微信存储空间');
       return;
     }
-    haptic();
     this.load(this.data.ym);
     this.openDaySheet(date);
     toast('已补记 ' + time.mdText(date) + ' ' + addShift + ' ' + h + ' 小时');
