@@ -28,8 +28,8 @@
   font-weight: 700;
   color: #0052d9;
   background: #e7f0ff;
-  padding: 22rpx 48rpx;
-  border-radius: 20rpx;
+  padding: 10rpx var(--pad-block);
+  border-radius: 16rpx;
 }
 
 /* ---------------- 汇总卡 ---------------- */

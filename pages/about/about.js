@@ -13,7 +13,7 @@ const app = getApp();
 
 Page({
   data: {
-    version: '1.1.9',
+    version: '1.1.10',
     storageLabel: '正式版',
     recordCount: 0,
     monthCount: 0,
@@ -24,7 +24,7 @@ Page({
   onLoad() {
     const storageEnv = store.getStorageEnv();
     this.setData({
-      version: app.globalData.version || '1.1.9',
+      version: app.globalData.version || '1.1.10',
       storageLabel: storageEnv.label,
     });
   },
