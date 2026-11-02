@@ -15,10 +15,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16rpx 24rpx;
 }
 .month-nav__btn {
-  padding: 0 20rpx;
+  padding: 0 var(--pad-block);
   height: 96rpx;
   line-height: 96rpx;
   font-size: 32rpx;
@@ -35,12 +34,12 @@
   background: #eef0f3;
 }
 .month-nav__ym {
-  font-size: 34rpx;
+  font-size: 38rpx;
   white-space: nowrap;
   font-weight: 700;
   color: #1a1a1a;
   text-align: center;
-  padding: 0 12rpx;
+  padding: 0 var(--pad-block);
 }
 
 /* ---------------- 汇总卡 ---------------- */

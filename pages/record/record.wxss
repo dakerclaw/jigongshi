@@ -21,12 +21,6 @@
   justify-content: space-between;
 }
 
-.shift-card__label {
-  font-size: 32rpx;
-  color: #667085;
-  margin-bottom: 12rpx;
-}
-
 .shift-card__value {
   display: flex;
   align-items: center;
@@ -34,23 +28,23 @@
 
 .shift-card__type {
   margin-left: 16rpx;
-  font-size: 36rpx;
-  color: #4e5969;
-  font-weight: 600;
+  font-size: 38rpx;
+  color: #1a1a1a;
+  font-weight: 700;
 }
 
 .shift-card__btn {
   flex-shrink: 0;
   margin-left: 20rpx;
-  padding: 0 36rpx;
-  height: 88rpx;
-  line-height: 88rpx;
+  padding: 0 28rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: #0052d9;
   background: #e7f0ff;
-  border-radius: 44rpx;
+  border-radius: 16rpx;
 }
 .shift-card__btn:active {
   background: #cfe0ff;
