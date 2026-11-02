@@ -15,21 +15,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 6rpx 0;
 }
 .picker-row__label {
-  font-size: 38rpx;
-  color: #1a1a1a;
-  font-weight: 700;
+  font-size: var(--fs-md);
+  color: #4e5969;
+  font-weight: 600;
 }
 .picker-row__value {
-  font-size: 38rpx;
+  font-size: 40rpx;
   white-space: nowrap;
   font-weight: 700;
   color: #0052d9;
   background: #e7f0ff;
   padding: 0 var(--pad-block);
-  height: 96rpx;
-  line-height: 96rpx;
+  height: 72rpx;
+  line-height: 72rpx;
   border-radius: 16rpx;
 }
 
