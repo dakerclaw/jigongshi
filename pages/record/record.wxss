@@ -14,36 +14,9 @@
   margin-top: 16rpx;
 }
 
-/* ---------------- 顶部导航条（三页统一：标签 + 数值/操作） ---------------- */
-.shift-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6rpx 0;
-}
-
-.shift-card__label {
-  font-size: 38rpx;
-  color: #1a1a1a;
-  font-weight: 700;
-}
-
-.shift-card__value {
-  display: flex;
-  align-items: center;
-}
-
-.shift-card__type {
+/* ---------------- 顶部班次（三页统一样式见 app.wxss .top-bar） ---------------- */
+.top-bar__value--shift {
   margin-left: 16rpx;
-  font-size: 38rpx;
-  color: #1a1a1a;
-  font-weight: 700;
-}
-
-.shift-card__caret {
-  margin-left: 8rpx;
-  font-size: 30rpx;
-  color: #667085;
 }
 
 /* ---------------- 模式切换 ---------------- */

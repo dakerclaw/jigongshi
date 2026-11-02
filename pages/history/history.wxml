@@ -7,13 +7,11 @@
 
 <view class="page">
   <!-- 月份选择 -->
-  <view class="card">
-    <view class="picker-row">
-      <view class="picker-row__label">查询月份</view>
-      <picker mode="date" fields="month" value="{{ym}}" end="{{currentYm}}" bindchange="onMonthChange">
-        <view class="picker-row__value">{{ymText}} ▾</view>
-      </picker>
-    </view>
+  <view class="card top-bar">
+    <view class="top-bar__label">查询月份</view>
+    <picker mode="date" fields="month" value="{{ym}}" end="{{currentYm}}" bindchange="onMonthChange">
+      <view class="top-bar__pill">{{ymText}} ▾</view>
+    </picker>
   </view>
 
   <!-- 汇总 -->

@@ -10,38 +10,7 @@
   min-height: 100vh;
 }
 
-/* ---------------- 月份切换 ---------------- */
-.month-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6rpx 0;
-}
-.month-nav__btn {
-  padding: 0 var(--pad-block);
-  height: 72rpx;
-  line-height: 72rpx;
-  font-size: var(--fs-md);
-  font-weight: 700;
-  color: #0052d9;
-  background: #e7f0ff;
-  border-radius: 16rpx;
-}
-.month-nav__btn:active {
-  background: #cfe0ff;
-}
-.month-nav__btn.is-disabled {
-  color: #667085;
-  background: #eef0f3;
-}
-.month-nav__ym {
-  font-size: 40rpx;
-  white-space: nowrap;
-  font-weight: 700;
-  color: #0052d9;
-  text-align: center;
-  padding: 0 var(--pad-block);
-}
+/* ---------------- 月份切换（三页统一样式见 app.wxss .top-bar） ---------------- */
 
 /* ---------------- 汇总卡 ---------------- */
 .sum-card {

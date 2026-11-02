@@ -7,13 +7,12 @@
 
 <view class="page">
   <!-- ========== 当前班次 ========== -->
-  <view class="card shift-card">
-    <view class="shift-card__label">当前班次</view>
-    <view class="shift-card__value" bindtap="openShiftPicker">
+  <view class="card top-bar">
+    <view class="top-bar__main">
       <view class="badge badge--{{shiftTheme}}">{{shift}}</view>
-      <text class="shift-card__type">{{shiftTypeLabel}}</text>
-      <text class="shift-card__caret">▾</text>
+      <text class="top-bar__value top-bar__value--shift">{{shiftTypeLabel}}</text>
     </view>
+    <view class="top-bar__btn" bindtap="openShiftPicker">变更</view>
   </view>
 
   <!-- ========== 记录方式 ========== -->

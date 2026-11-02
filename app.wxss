@@ -67,6 +67,62 @@ picker {
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
+/* ---------------- 顶部栏（记录 / 月度 / 历史 三页统一） ----------------
+ * 三页首张卡片统一：内容区 76rpx 高 + 卡片 24rpx 上下内边距 = 124rpx
+ * 左侧标签/信息，右侧数值或操作按钮，保证三页高度、字号完全一致
+ */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 76rpx;
+}
+.top-bar__main {
+  display: flex;
+  align-items: center;
+  min-height: 76rpx;
+}
+.top-bar__label {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.top-bar__value {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--c-primary);
+}
+.top-bar__btn {
+  flex-shrink: 0;
+  height: 76rpx;
+  line-height: 76rpx;
+  padding: 0 28rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  text-align: center;
+  color: var(--c-primary);
+  background: #e7f0ff;
+  border-radius: 16rpx;
+}
+.top-bar__btn:active {
+  background: #cfe0ff;
+}
+.top-bar__btn.is-disabled {
+  color: #667085;
+  background: #eef0f3;
+}
+.top-bar__pill {
+  height: 76rpx;
+  line-height: 76rpx;
+  padding: 0 var(--pad-block);
+  font-size: 40rpx;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--c-primary);
+  background: #e7f0ff;
+  border-radius: 16rpx;
+}
+
 /* 区块标题 */
 .section-title {
   font-size: 46rpx;

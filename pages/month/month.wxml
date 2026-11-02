@@ -7,12 +7,12 @@
 
 <view class="page">
   <!-- 月份切换 -->
-  <view class="card month-nav">
-    <view class="month-nav__btn" bindtap="onPrevMonth">‹ 上月</view>
+  <view class="card top-bar">
+    <view class="top-bar__btn" bindtap="onPrevMonth">‹ 上月</view>
     <picker mode="date" fields="month" value="{{ym}}" end="{{currentYm}}" bindchange="onMonthChange">
-      <view class="month-nav__ym">{{ymText}} ▾</view>
+      <view class="top-bar__pill">{{ymText}} ▾</view>
     </picker>
-    <view class="month-nav__btn {{canNext ? '' : 'is-disabled'}}" bindtap="onNextMonth">下月 ›</view>
+    <view class="top-bar__btn {{canNext ? '' : 'is-disabled'}}" bindtap="onNextMonth">下月 ›</view>
   </view>
 
   <!-- 本月汇总 -->
