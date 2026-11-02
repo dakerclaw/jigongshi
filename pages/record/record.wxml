@@ -6,21 +6,14 @@
   ------------------------------------------------------------------ -->
 
 <view class="page">
-  <!-- ========== 当前班制 ========== -->
+  <!-- ========== 当前班次 ========== -->
   <view class="card shift-card">
     <view class="shift-card__label">当前班次</view>
-    <picker
-      mode="selector"
-      range="{{shiftOptions}}"
-      range-key="label"
-      value="{{pickerTypeIndex}}"
-      bindchange="onPickShiftType"
-    >
-      <view class="shift-card__value">
-        <text class="shift-card__type">{{shiftTypeLabel}}</text>
-        <text class="shift-card__caret">▾</text>
-      </view>
-    </picker>
+    <view class="shift-card__value" bindtap="openShiftPicker">
+      <view class="badge badge--{{shiftTheme}}">{{shift}}</view>
+      <text class="shift-card__type">{{shiftTypeLabel}}</text>
+      <text class="shift-card__caret">▾</text>
+    </view>
   </view>
 
   <!-- ========== 记录方式 ========== -->

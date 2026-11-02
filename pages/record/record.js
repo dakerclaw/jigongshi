@@ -12,10 +12,6 @@ const { toast, confirmDialog, setTabBarHidden, haptic } = require('../../utils/u
 
 const app = getApp();
 const UNDO_MS = 8000;
-const SHIFT_OPTIONS = [
-  { key: '12h', label: '12小时班制' },
-  { key: '8h', label: '8小时班制' },
-];
 
 Page({
   data: {
@@ -24,7 +20,6 @@ Page({
     shift: '白班',
     shiftTheme: 'day',
     shiftTypeLabel: '12小时班制',
-    pickerTypeIndex: 0,
 
     // 记录方式
     mode: 'time',
