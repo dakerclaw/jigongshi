@@ -42,7 +42,7 @@
 
 .shift-card__caret {
   margin-left: 8rpx;
-  font-size: 28rpx;
+  font-size: 30rpx;
   color: #667085;
 }
 
