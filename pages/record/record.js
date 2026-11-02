@@ -20,6 +20,7 @@ Page({
     shift: '白班',
     shiftTheme: 'day',
     shiftTypeLabel: '12小时班制',
+    shiftTypes: shiftUtil.SHIFT_TYPES,
 
     // 记录方式
     mode: 'time',
