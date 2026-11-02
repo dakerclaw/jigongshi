@@ -12,6 +12,10 @@ const { toast, confirmDialog, setTabBarHidden, haptic } = require('../../utils/u
 
 const app = getApp();
 const UNDO_MS = 8000;
+const SHIFT_OPTIONS = [
+  { key: '12h', label: '12小时班制' },
+  { key: '8h', label: '8小时班制' },
+];
 
 Page({
   data: {
@@ -20,7 +24,7 @@ Page({
     shift: '白班',
     shiftTheme: 'day',
     shiftTypeLabel: '12小时班制',
-    shiftTypes: shiftUtil.SHIFT_TYPES,
+    pickerTypeIndex: 0,
 
     // 记录方式
     mode: 'time',
@@ -268,7 +272,13 @@ Page({
       shift: validShift,
       shiftTheme: shiftUtil.themeOf(validShift),
       shiftTypeLabel: shiftUtil.labelOf(validType),
+      pickerTypeIndex: validType === '8h' ? 1 : 0,
     });
+  },
+
+  /** 顶部直接打开班制选择弹层（复用原「变更」入口） */
+  onPickShiftType() {
+    this.openShiftPicker();
   },
 
   openShiftPicker() {
