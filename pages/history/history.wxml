@@ -19,14 +19,14 @@
     <view class="sum-card__row">
       <view class="sum-card__k">{{ymText}} 出勤总工时</view>
       <view class="sum-card__big">
-        <text class="num sum-card__num">{{totalHours}}</text>
-        <text class="sum-card__u">小时</text>
+        <text class="num sum-card__num">{{totalUnits}}</text>
+        <text class="sum-card__u">个</text>
       </view>
     </view>
     <view class="sum-card__grid">
       <view class="sum-card__item">
-        <view class="sum-card__v num">{{totalUnits}}</view>
-        <view class="sum-card__label">折合工时（个）</view>
+        <view class="sum-card__v num">{{totalHours}}</view>
+        <view class="sum-card__label">出勤小时数</view>
       </view>
       <view class="sum-card__item">
         <view class="sum-card__v num">{{workDays}}</view>
@@ -37,7 +37,7 @@
         <view class="sum-card__label">日均（小时）</view>
       </view>
     </view>
-    <view class="sum-note">折合工时按每日工时 ÷ 8 保留两位小数后逐日相加</view>
+    <view class="sum-note">总工时按每日工时 ÷ 8 保留两位小数后逐日相加</view>
   </view>
 
   <!-- 每日出勤月历 -->
