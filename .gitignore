@@ -7,9 +7,6 @@ miniprogram_npm/
 # 本地私有配置（含开发者个人设置）
 project.private.config.json
 
-# 本地智能体工作区（记忆、配置等本地状态）
-.workbuddy/
-
 # 本地临时目录
 tmp/
 

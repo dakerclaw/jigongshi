@@ -15,7 +15,7 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
-const SKIP_DIRS = new Set(['node_modules', '.git', '.workbuddy', 'tmp']);
+const SKIP_DIRS = new Set(['node_modules', '.git',  'tmp']);
 const errors = [];
 let jsCount = 0;
 let jsonCount = 0;

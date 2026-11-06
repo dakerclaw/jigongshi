@@ -209,19 +209,6 @@ jigongshi/
 4. 基础库版本 `3.5.5` 及以上（见 `project.config.json` 的 `libVersion`）
 5. 直接编译即可运行——无需安装依赖，也无需构建步骤
 
-静态检查与回归测试（需要 Node.js 18+，不依赖 npm 包）：
-
-```bash
-node tools/check.js
-node tools/test-core.js
-# 或
-npm run check
-npm test
-```
-
-`test-core.js` 使用 Node stub 模拟 `wx` Storage、`Page`、`getApp` 与 `Date`，覆盖工时边界、存储失败、下班快照、跨天今日记录、月度单条编辑/补记、24 个月外班次分布、备份导入导出等场景。
-
-> 提示：`project.config.json` 的 `packOptions.ignore` 已排除 `.git/`、`.workbuddy/`、`tools/`、`package.json`、文档与系统文件，只影响**预览与上传**的包内容，不影响本地编译。
 
 ---
 
