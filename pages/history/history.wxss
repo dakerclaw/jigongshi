@@ -61,14 +61,7 @@
   opacity: 0.9;
 }
 
-/* ---------------- 鍑哄嫟鏈堝巻 ---------------- */
-.cal-title {
-  text-align: center;
-  font-size: 38rpx;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 16rpx;
-}
+/* ---------------- 出勤月历 ---------------- */
 .cal-week {
   display: flex;
   margin-bottom: 8rpx;

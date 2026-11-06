@@ -42,7 +42,6 @@
 
   <!-- 每日出勤月历 -->
   <view class="card">
-    <view class="cal-title">{{calendar.title}}</view>
     <view class="cal-week">
       <view class="cal-week__cell" wx:for="{{calendar.weekdays}}" wx:key="*this">{{item}}</view>
     </view>
