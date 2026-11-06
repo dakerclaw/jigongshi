@@ -75,7 +75,7 @@ const shiftUtil = require(path.join(ROOT, 'utils/shift.js'));
 const stats = require(path.join(ROOT, 'utils/stats.js'));
 
 const app = {
-  globalData: { version: '1.1.15', shiftType: '12h', shift: '白班' },
+  globalData: { version: '1.1.16', shiftType: '12h', shift: '白班' },
   saveDefaultShift(type, shift) {
     this.globalData.shiftType = type;
     this.globalData.shift = shift;
@@ -615,7 +615,7 @@ test('月度页：跨天/未来日期与单条编辑、补记', () => {
 
 /* ---------------- 历史页：24 个月外班次 / 复制列名 ---------------- */
 
-test('历史页：查询 24 个月外月份仍有班次分布', () => {
+test('历史页：查询 24 个月外月份月历仍显示班次颜色', () => {
   resetStorage();
   seedConfig();
   setNow('2026-10-20T12:00:00');
@@ -626,9 +626,22 @@ test('历史页：查询 24 个月外月份仍有班次分布', () => {
   page.onLoad();
   page.onShow();
   page.load('2024-01');
-  assert.strictEqual(page.data.shiftStat.length, 1, '24 个月外的月份也应有班次分布');
-  assert.strictEqual(page.data.shiftStat[0].name, '白班');
   assert.strictEqual(page.data.rows.length, 1);
+
+  // 月历：2024-01-05 白班着色
+  const cells = page.data.calendar.weeks.flat().filter(Boolean);
+  const c5 = cells.find((c) => c.day === 5);
+  assert(c5, '月历应包含 1 月 5 日');
+  assert.strictEqual(c5.theme, 'day', '白班出勤应标 day 色');
+  assert(c5.lunar && c5.lunar.length > 0, '农历文字不应为空');
+  assert.strictEqual(page.data.legend.length, 1);
+  assert.strictEqual(page.data.legend[0].name, '白班');
+
+  // 切到 2026-10：夜班着色
+  page.load('2026-10');
+  const cells2 = page.data.calendar.weeks.flat().filter(Boolean);
+  const c20 = cells2.find((c) => c.day === 20);
+  assert.strictEqual(c20.theme, 'night', '夜班出勤应标 night 色');
 
   clipboard = '';
   page.onCopyMonth();
@@ -714,7 +727,7 @@ test('关于页：导出、清空、版本号', () => {
   const page = makePage('pages/about/about.js');
   page.onLoad();
   page.onShow();
-  assert.strictEqual(page.data.version, '1.1.15');
+  assert.strictEqual(page.data.version, '1.1.16');
   assert.strictEqual(page.data.storageLabel, '正式版');
   assert.strictEqual(page.data.recordCount, 1);
 

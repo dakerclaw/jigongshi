@@ -8,9 +8,8 @@
 const store = require('../../utils/store.js');
 const time = require('../../utils/time.js');
 const stats = require('../../utils/stats.js');
+const lunar = require('../../utils/lunar.js');
 const { toast, setTabBarHidden } = require('../../utils/ui.js');
-
-const MAX_MONTHS = 24;
 
 Page({
   data: {
@@ -25,8 +24,14 @@ Page({
     avgHours: '0.0',
     hasCapped: false,
 
-    shiftStat: [],
-    monthStat: [],
+    // 月历
+    calendar: {
+      title: '', // 2026年11月
+      weekdays: ['一', '二', '三', '四', '五', '六', '日'],
+      weeks: [], // 每周 7 格；每日 { day, lunar, theme, inMonth, isFuture }
+    },
+    legend: [], // 图例：[{name, theme}]
+
     rows: [],
   },
 
@@ -56,9 +61,6 @@ Page({
     let month = String(ym || currentYm);
     if (month > currentYm) month = currentYm; // 不展示未来月份
 
-    // 近 24 个月对比：直接基于全部记录聚合
-    const monthStat = stats.monthStats(store.getRecords(), MAX_MONTHS);
-
     const list = store.getRecordsByMonth(month);
     const dayMap = stats.buildDayMap(list);
     const sum = stats.summarize(list);
@@ -73,15 +75,19 @@ Page({
         rawText: time.durationText(dayMap[d].minutes),
       }));
 
-    // 班次分布只取「当前查询月份」，不再受 24 个月截断影响
-    const shiftStat = stats.shiftStats(list);
+    // 出勤日 -> 班次（当日有多个班次取第一个，月历一格只标一种颜色）
+    const dayShift = {};
+    list.forEach((r) => {
+      if (!r || !r.date) return;
+      if (!dayShift[r.date]) dayShift[r.date] = r.shift || '';
+    });
 
     this.setData({
       ym: month,
       ymText: time.ymText(month),
       currentYm: currentYm,
-      monthStat: monthStat,
-      shiftStat: shiftStat,
+      calendar: this.buildCalendar(month, dayShift, currentYm),
+      legend: this.buildLegend(dayShift),
       rows: rows,
       hasCapped: list.some((r) => r && r.capped),
       totalHours: sum.totalHours,
@@ -92,6 +98,69 @@ Page({
     });
   },
 
+  /**
+   * 构建月历：第一列为星期一
+   * 每格：{ day, lunar, theme, inMonth, isFuture }
+   * theme: '' 未出勤不标色 / 'day' 白班 / 'mid' 中班 / 'night' 夜班
+   */
+  buildCalendar(ym, dayShift, currentYm) {
+    const parts = String(ym).split('-');
+    const year = Number(parts[0]);
+    const month = Number(parts[1]); // 1-12
+    if (!year || !month) return { title: '', weekdays: this.data.calendar.weekdays, weeks: [] };
+
+    const daysInMonth = new Date(year, month, 0).getDate();
+    // JS getDay(): 0=周日...6=周六；换算为周一起始的列号（0=周一 ... 6=周日）
+    const firstCol = (new Date(year, month - 1, 1).getDay() + 6) % 7;
+
+    const cells = [];
+    // 月首前置空格
+    for (let i = 0; i < firstCol; i++) cells.push(null);
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = year + '-' + time.pad2(month) + '-' + time.pad2(d);
+      const shift = dayShift[date] || '';
+      cells.push({
+        day: d,
+        lunar: lunar.lunarDayText(year, month, d),
+        theme: shift ? require('../../utils/shift.js').themeOf(shift) : '',
+        inMonth: true,
+        isFuture: date > this.ymOfToday(),
+      });
+    }
+    // 末尾补齐整周
+    while (cells.length % 7 !== 0) cells.push(null);
+
+    const weeks = [];
+    for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+
+    return {
+      title: time.ymText(ym),
+      weekdays: this.data.calendar.weekdays,
+      weeks: weeks,
+    };
+  },
+
+  /** 当天所在年月，用于判断未来日期（未来月份本就查不到，这里防月末跨界） */
+  ymOfToday() {
+    const n = time.now();
+    return n.ym + '-' + n.ymd.slice(8, 10);
+  },
+
+  /** 图例：该月实际出现过的班次颜色说明 */
+  buildLegend(dayShift) {
+    const shiftUtil = require('../../utils/shift.js');
+    const seen = {};
+    Object.keys(dayShift).forEach((date) => {
+      const s = dayShift[date];
+      if (s) seen[s] = shiftUtil.themeOf(s);
+    });
+    // 固定顺序：白班、中班、夜班
+    return ['白班', '中班', '夜班']
+      .filter((name) => seen[name])
+      .map((name) => ({ name: name, theme: seen[name] }));
+  },
+
   onMonthChange(e) {
     const ym = String(e.detail.value || '');
     if (!ym) return;
@@ -100,10 +169,6 @@ Page({
       return;
     }
     this.load(ym);
-  },
-
-  onPickBar(e) {
-    this.load(e.currentTarget.dataset.ym);
   },
 
   /* ---------------- 复制查询结果 ---------------- */

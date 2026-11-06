@@ -40,40 +40,33 @@
     <view class="sum-note">折合工时按每日工时 ÷ 8 保留两位小数后逐日相加</view>
   </view>
 
-  <!-- 班次分布 -->
-  <view class="card" wx:if="{{shiftStat.length}}">
-    <view class="section-title">班次分布</view>
-    <view class="stat-row" wx:for="{{shiftStat}}" wx:key="name">
-      <view class="stat-row__name badge badge--sm badge--{{item.theme}}">{{item.name}}</view>
-      <view class="stat-row__bar">
-        <view class="stat-row__fill stat-row__fill--{{item.theme}}" style="width:{{item.pct}}%"></view>
-      </view>
-      <view class="stat-row__v">
-        <text class="num">{{item.units}}</text>
-        <text class="stat-row__u">个</text>
+  <!-- 每日出勤月历 -->
+  <view class="card">
+    <view class="cal-title">{{calendar.title}}</view>
+    <view class="cal-week">
+      <view class="cal-week__cell" wx:for="{{calendar.weekdays}}" wx:key="*this">{{item}}</view>
+    </view>
+    <view class="cal-body">
+      <view class="cal-row" wx:for="{{calendar.weeks}}" wx:key="index" wx:for-item="week">
+        <view class="cal-cell" wx:for="{{week}}" wx:key="index" wx:for-item="cell">
+          <view
+            wx:if="{{cell}}"
+            class="cal-cell__inner {{cell.theme ? 'cal-cell--' + cell.theme : ''}}"
+          >
+            <view class="cal-cell__day">{{cell.day}}</view>
+            <view class="cal-cell__lunar">{{cell.lunar}}</view>
+          </view>
+          <view wx:else class="cal-cell__inner cal-cell__inner--empty"></view>
+        </view>
       </view>
     </view>
-  </view>
-
-  <!-- 各月对比 -->
-  <view class="card" wx:if="{{monthStat.length}}">
-    <view class="section-title">各月总工时对比</view>
-    <view
-      class="bar-item {{item.ym === ym ? 'is-active' : ''}}"
-      wx:for="{{monthStat}}"
-      wx:key="ym"
-      data-ym="{{item.ym}}"
-      bindtap="onPickBar"
-    >
-      <view class="bar-item__label">{{item.label}}</view>
-      <view class="bar-item__track">
-        <view
-          class="bar-item__fill {{item.ym === ym ? 'is-active' : ''}}"
-          style="width:{{item.pct}}%"
-        ></view>
+    <view class="cal-legend" wx:if="{{legend.length}}">
+      <view class="cal-legend__item" wx:for="{{legend}}" wx:key="name">
+        <view class="cal-legend__dot cal-legend__dot--{{item.theme}}"></view>
+        <text>{{item.name}}出勤</text>
       </view>
-      <view class="bar-item__v"><text class="num">{{item.units}}</text> 个</view>
     </view>
+    <view class="cal-empty" wx:if="{{!rows.length}}">该月暂无出勤记录</view>
   </view>
 
   <!-- 复制查询结果 -->
